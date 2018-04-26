@@ -1,0 +1,20 @@
+
+# Host settings
+
+hosts = [
+
+]
+
+
+# Kerberos settings
+
+kerberos_host = []
+kerberos_realm = ''
+
+# Mail settings
+
+mail_host = ''
+mail_port = 25
+mail_from = ''
+mail_user = ''
+mail_password = ''
