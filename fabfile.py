@@ -1,6 +1,8 @@
 import uuid
 import settings
 import smtplib
+import json
+import requests
 from email.mime.text import MIMEText
 from fabric.api import run, env, execute
 from fabric.decorators import task, roles
@@ -10,6 +12,7 @@ env.user = 'root'
 env.roledefs = {
     'hosts': settings.hosts,
     'kerberos': settings.kerberos_host,
+    'master': settings.master_host
 }
 
 
@@ -60,6 +63,22 @@ Password: {password}'''.format(mail_from=settings.mail_from, to=mail,
         server.login(settings.mail_user, settings.mail_password)
     server.sendmail(settings.mail_from, [mail], msg.as_string())
     server.quit()
+
+
+@roles('master')
+def create_hdfs_home(username):
+    run('kinit -kt /etc/security/keytabs/hdfs.headless.keytab hdfs-edi_test')
+    run('hdfs dfs -mkdir /user/{}'.format(username))
+
+
+def create_hdfs_default_policy(username):
+    template = json.loads('ranger_templates/hdfs.json')
+    template['service'] = settings.cluster_name
+    template['name'] = 'hdfs_home_{}'.format(username)
+    template['description'] = 'HDFS home directory for user {}'.format(
+        username)
+    template['resources']['path']['values'].append('/user/{}'.format(username))
+    template['policyItems']['users'].append(username)
 
 
 @task
