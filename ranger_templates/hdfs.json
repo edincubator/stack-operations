@@ -1,0 +1,43 @@
+{
+  "isEnabled": true,
+  "service": "",
+  "name": "",
+  "description": "",
+  "isAuditEnabled": true,
+  "resources": {
+    "path": {
+      "values": [
+      ],
+      "isExcludes": false,
+      "isRecursive": true
+    }
+  },
+  "policyItems": [
+    {
+      "accesses": [
+        {
+          "type": "read",
+          "isAllowed": true
+        },
+        {
+          "type": "write",
+          "isAllowed": true
+        },
+        {
+          "type": "execute",
+          "isAllowed": true
+        }
+      ],
+      "users": [
+      ],
+      "groups": [],
+      "conditions": [],
+      "delegateAdmin": true
+    }
+  ],
+  "denyPolicyItems": [],
+  "allowExceptions": [],
+  "denyExceptions": [],
+  "dataMaskPolicyItems": [],
+  "rowFilterPolicyItems": []
+}

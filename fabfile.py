@@ -1,12 +1,12 @@
-import uuid
-import settings
-import smtplib
+import base64
 import json
-import requests
+import smtplib
+import uuid
 from email.mime.text import MIMEText
-from fabric.api import run, env, execute
-from fabric.decorators import task, roles
 
+import settings
+from fabric.api import env, execute, local, run
+from fabric.decorators import roles, task
 
 env.user = 'root'
 env.roledefs = {
@@ -27,6 +27,8 @@ def create_user(username, mail):
                         realm=settings.kerberos_realm)))
 
     execute(create_unix_user, username)
+    execute(create_hdfs_home, username)
+    execute(create_hdfs_default_policy, username)
     execute(send_password_mail, username, principal,
             str(kpass.get(settings.kerberos_host[0])), mail)
 
@@ -41,8 +43,10 @@ def create_unix_user(username):
 def create_kerberos_user(principal, password=None):
     if password is None:
         password = uuid.uuid4()
-    run('kadmin addprinc -pw {password} +needchange {principal}'.format(
-        password=password, principal=principal))
+    run('kadmin -p {admin_principal} addprinc -pw {password} +needchange '
+        '{principal}'.format(
+            admin_principal=settings.kerberos_admin_principal,
+            password=password, principal=principal))
     return password
 
 
@@ -72,13 +76,26 @@ def create_hdfs_home(username):
 
 
 def create_hdfs_default_policy(username):
-    template = json.loads('ranger_templates/hdfs.json')
+
+    template = json.load(open('ranger_templates/hdfs.json', 'r'))
     template['service'] = settings.cluster_name
     template['name'] = 'hdfs_home_{}'.format(username)
     template['description'] = 'HDFS home directory for user {}'.format(
         username)
     template['resources']['path']['values'].append('/user/{}'.format(username))
-    template['policyItems']['users'].append(username)
+    template['policyItems'][0]['users'].append(username)
+
+    local("curl -X POST {ranger_url}/service/public/v2/api/policy "
+          "-H 'authorization: Basic {auth_token}' "
+          "-H 'content-type: application/json' "
+          "-d '{content}'".format(
+            ranger_url=settings.ranger_url,
+            auth_token=base64.b64encode(
+                '{ranger_user}:{ranger_password}'.format(
+                    ranger_user=settings.ranger_user,
+                    ranger_password=settings.ranger_password)),
+            content=json.dumps(template))
+          )
 
 
 @task
@@ -96,4 +113,6 @@ def delete_unix_user(username):
 
 @roles('kerberos')
 def delete_kerberos_user(principal):
-    run('kadmin delete_principal {}'.format(principal))
+    run('kadmin -p {admin_principal} delete_principal {principal}'.format(
+        principal=principal,
+        admin_principal=settings.kerberos_admin_principal))
