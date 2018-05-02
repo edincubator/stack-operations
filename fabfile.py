@@ -71,14 +71,14 @@ Password: {password}'''.format(mail_from=settings.mail_from, to=mail,
 
 @roles('master')
 def create_hdfs_home(username):
-    run('kinit -kt /etc/security/keytabs/hdfs.headless.keytab hdfs-edi_test')
+    run('kinit -kt /etc/security/keytabs/hdfs.headless.keytab {}}'.format(
+        settings.hdfs_principal))
     run('hdfs dfs -mkdir /user/{}'.format(username))
 
 
 def create_hdfs_default_policy(username):
-
     template = json.load(open('ranger_templates/hdfs.json', 'r'))
-    template['service'] = settings.cluster_name
+    template['service'] = '{}_hadoop'.format(settings.ranger_cluster_name)
     template['name'] = 'hdfs_home_{}'.format(username)
     template['description'] = 'HDFS home directory for user {}'.format(
         username)
@@ -116,3 +116,67 @@ def delete_kerberos_user(principal):
     run('kadmin -p {admin_principal} delete_principal {principal}'.format(
         principal=principal,
         admin_principal=settings.kerberos_admin_principal))
+
+
+@task
+def create_hive_database(database_name, username):
+    execute(create_hive_database_beeline, database_name)
+    execute(create_hive_database_policy, database_name, username)
+    execute(create_hive_database_hdfs_policy, database_name, username)
+
+
+def create_hive_database_hdfs_policy(database_name, username):
+    template = json.load(open('ranger_templates/hdfs.json', 'r'))
+    template['service'] = '{}_hadoop'.format(settings.ranger_cluster_name)
+    template['name'] = 'hdfs_hive_{database}'.format(database=database_name)
+    template['description'] = 'HDFS directory for HIVE database '
+    '{database}'.format(database=database_name)
+    template['resources']['path']['values'].append(
+        '/apps/hive/warehouse/{database}.db'.format(database=database_name))
+    template['policyItems'][0]['users'].append(username)
+
+    local("curl -X POST {ranger_url}/service/public/v2/api/policy "
+          "-H 'authorization: Basic {auth_token}' "
+          "-H 'content-type: application/json' "
+          "-d '{content}'".format(
+            ranger_url=settings.ranger_url,
+            auth_token=base64.b64encode(
+                '{ranger_user}:{ranger_password}'.format(
+                    ranger_user=settings.ranger_user,
+                    ranger_password=settings.ranger_password)),
+            content=json.dumps(template))
+          )
+
+
+def create_hive_database_policy(database_name, username):
+    template = json.load(open('ranger_templates/hive.json', 'r'))
+    template['service'] = '{}_hive'.format(settings.ranger_cluster_name)
+    template['name'] = 'hive_{database}'.format(database=database_name)
+    template['description'] = 'HIVE database {database}'.format(
+        database=database_name)
+    template['resources']['database']['values'].append(database_name)
+    template['policyItems'][0]['users'].append(username)
+
+    local("curl -X POST {ranger_url}/service/public/v2/api/policy "
+          "-H 'authorization: Basic {auth_token}' "
+          "-H 'content-type: application/json' "
+          "-d '{content}'".format(
+            ranger_url=settings.ranger_url,
+            auth_token=base64.b64encode(
+                '{ranger_user}:{ranger_password}'.format(
+                    ranger_user=settings.ranger_user,
+                    ranger_password=settings.ranger_password)),
+            content=json.dumps(template))
+          )
+
+
+@roles('master')
+def create_hive_database_beeline(database_name):
+    run('kinit -kt /etc/security/keytabs/hive.service.keytab {}'.format(
+        settings.hive_principal))
+    run('beeline -u "jdbc:hive2://{hive_url}/default;'
+        'principal={hive_principal};" '
+        '-e "CREATE DATABASE {database_name}"'.format(
+            hive_url=settings.hive_url,
+            hive_principal=settings.hive_beeline_principal,
+            database_name=database_name))
