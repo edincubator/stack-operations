@@ -28,7 +28,14 @@ def create_user(username, mail):
 
     execute(create_unix_user, username)
     execute(create_hdfs_home, username)
-    execute(create_hdfs_default_policy, username)
+    execute(create_ranger_policy,
+            '/user/{}'.format(username),
+            username,
+            'hdfs_home_{}'.format(username),
+            'HDFS home directory for user {}'.format(username),
+            'path',
+            'hdfs'
+            )
     execute(send_password_mail, username, principal,
             str(kpass.get(settings.kerberos_host[0])), mail)
 
@@ -76,17 +83,6 @@ def create_hdfs_home(username):
     run('hdfs dfs -mkdir /user/{}'.format(username))
 
 
-def create_hdfs_default_policy(username):
-    create_ranger_policy(
-        '/user/{}'.format(username),
-        username,
-        'hdfs_home_{}'.format(username),
-        'HDFS home directory for user {}'.format(username),
-        'path',
-        'hdfs'
-    )
-
-
 @task
 def delete_user(username):
     principal = '{username}@{realm}'.format(username=username,
@@ -110,31 +106,24 @@ def delete_kerberos_user(principal):
 @task
 def create_hive_database(database_name, username):
     execute(create_hive_database_beeline, database_name)
-    execute(create_hive_database_policy, database_name, username)
-    execute(create_hive_database_hdfs_policy, database_name, username)
-
-
-def create_hive_database_hdfs_policy(database_name, username):
-    create_ranger_policy(
-        '/apps/hive/warehouse/{database}.db'.format(database=database_name),
-        username,
-        'hdfs_hive_{database}'.format(database=database_name),
-        'HDFS directory for HIVE database {database}'.format(
-            database=database_name),
-        'path',
-        'hdfs'
-    )
-
-
-def create_hive_database_policy(database_name, username):
-    create_ranger_policy(
-        database_name,
-        username,
-        'hive_{}'.format(database_name),
-        'HIVE database {}'.format(database_name),
-        'database',
-        'hive'
-    )
+    execute(create_ranger_policy,
+            database_name,
+            username,
+            'hive_{}'.format(database_name),
+            'HIVE database {}'.format(database_name),
+            'database',
+            'hive'
+            )
+    execute(create_ranger_policy,
+            '/apps/hive/warehouse/{database}.db'.format(
+                database=database_name),
+            username,
+            'hdfs_hive_{database}'.format(database=database_name),
+            'HDFS directory for HIVE database {database}'.format(
+                database=database_name),
+            'path',
+            'hdfs'
+            )
 
 
 @roles('master')
