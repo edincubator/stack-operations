@@ -183,3 +183,22 @@ def delete_hive_database(database_name):
             hive_url=settings.hive_url,
             hive_principal=settings.hive_beeline_principal,
             database_name=database_name))
+
+
+@task
+def create_hbase_namespace(namespace_name, username):
+    execute(create_hbase_namespace_hbase, namespace_name)
+    execute(create_ranger_policy,
+            '{}:*'.format(namespace_name),
+            username,
+            'hbase_{}'.format(namespace_name),
+            'Hbase policy for namespace {}'.format(namespace_name),
+            'table',
+            'hbase')
+
+
+@roles('master')
+def create_hbase_namespace_hbase(namespace_name):
+    run('kinit -kt /etc/security/keytabs/hbase.headless.keytab {}'.format(
+        settings.hbase_principal))
+    run('echo "create_namespace \'{}\'" | hbase shell'.format(namespace_name))
