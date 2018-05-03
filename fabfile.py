@@ -71,31 +71,20 @@ Password: {password}'''.format(mail_from=settings.mail_from, to=mail,
 
 @roles('master')
 def create_hdfs_home(username):
-    run('kinit -kt /etc/security/keytabs/hdfs.headless.keytab {}}'.format(
+    run('kinit -kt /etc/security/keytabs/hdfs.headless.keytab {}'.format(
         settings.hdfs_principal))
     run('hdfs dfs -mkdir /user/{}'.format(username))
 
 
 def create_hdfs_default_policy(username):
-    template = json.load(open('ranger_templates/hdfs.json', 'r'))
-    template['service'] = '{}_hadoop'.format(settings.ranger_cluster_name)
-    template['name'] = 'hdfs_home_{}'.format(username)
-    template['description'] = 'HDFS home directory for user {}'.format(
-        username)
-    template['resources']['path']['values'].append('/user/{}'.format(username))
-    template['policyItems'][0]['users'].append(username)
-
-    local("curl -X POST {ranger_url}/service/public/v2/api/policy "
-          "-H 'authorization: Basic {auth_token}' "
-          "-H 'content-type: application/json' "
-          "-d '{content}'".format(
-            ranger_url=settings.ranger_url,
-            auth_token=base64.b64encode(
-                '{ranger_user}:{ranger_password}'.format(
-                    ranger_user=settings.ranger_user,
-                    ranger_password=settings.ranger_password)),
-            content=json.dumps(template))
-          )
+    create_ranger_policy(
+        '/user/{}'.format(username),
+        username,
+        'hdfs_home_{}'.format(username),
+        'HDFS home directory for user {}'.format(username),
+        'path',
+        'hdfs'
+    )
 
 
 @task
@@ -126,48 +115,26 @@ def create_hive_database(database_name, username):
 
 
 def create_hive_database_hdfs_policy(database_name, username):
-    template = json.load(open('ranger_templates/hdfs.json', 'r'))
-    template['service'] = '{}_hadoop'.format(settings.ranger_cluster_name)
-    template['name'] = 'hdfs_hive_{database}'.format(database=database_name)
-    template['description'] = 'HDFS directory for HIVE database '
-    '{database}'.format(database=database_name)
-    template['resources']['path']['values'].append(
-        '/apps/hive/warehouse/{database}.db'.format(database=database_name))
-    template['policyItems'][0]['users'].append(username)
-
-    local("curl -X POST {ranger_url}/service/public/v2/api/policy "
-          "-H 'authorization: Basic {auth_token}' "
-          "-H 'content-type: application/json' "
-          "-d '{content}'".format(
-            ranger_url=settings.ranger_url,
-            auth_token=base64.b64encode(
-                '{ranger_user}:{ranger_password}'.format(
-                    ranger_user=settings.ranger_user,
-                    ranger_password=settings.ranger_password)),
-            content=json.dumps(template))
-          )
+    create_ranger_policy(
+        '/apps/hive/warehouse/{database}.db'.format(database=database_name),
+        username,
+        'hdfs_hive_{database}'.format(database=database_name),
+        'HDFS directory for HIVE database {database}'.format(
+            database=database_name),
+        'path',
+        'hdfs'
+    )
 
 
 def create_hive_database_policy(database_name, username):
-    template = json.load(open('ranger_templates/hive.json', 'r'))
-    template['service'] = '{}_hive'.format(settings.ranger_cluster_name)
-    template['name'] = 'hive_{database}'.format(database=database_name)
-    template['description'] = 'HIVE database {database}'.format(
-        database=database_name)
-    template['resources']['database']['values'].append(database_name)
-    template['policyItems'][0]['users'].append(username)
-
-    local("curl -X POST {ranger_url}/service/public/v2/api/policy "
-          "-H 'authorization: Basic {auth_token}' "
-          "-H 'content-type: application/json' "
-          "-d '{content}'".format(
-            ranger_url=settings.ranger_url,
-            auth_token=base64.b64encode(
-                '{ranger_user}:{ranger_password}'.format(
-                    ranger_user=settings.ranger_user,
-                    ranger_password=settings.ranger_password)),
-            content=json.dumps(template))
-          )
+    create_ranger_policy(
+        database_name,
+        username,
+        'hive_{}'.format(database_name),
+        'HIVE database {}'.format(database_name),
+        'database',
+        'hive'
+    )
 
 
 @roles('master')
@@ -180,3 +147,26 @@ def create_hive_database_beeline(database_name):
             hive_url=settings.hive_url,
             hive_principal=settings.hive_beeline_principal,
             database_name=database_name))
+
+
+def create_ranger_policy(resource, username, policy_name, policy_description,
+                         resource_type, service):
+    template = json.load(open('ranger_templates/{}.json'.format(service), 'r'))
+    template['service'] = '{cluster_name}_{service}'.format(
+        cluster_name=settings.ranger_cluster_name, service=service)
+    template['name'] = policy_name
+    template['description'] = policy_description
+    template['resources'][resource_type]['values'].append(resource)
+    template['policyItems'][0]['users'].append(username)
+
+    local("curl -X POST {ranger_url}/service/public/v2/api/policy "
+          "-H 'authorization: Basic {auth_token}' "
+          "-H 'content-type: application/json' "
+          "-d '{content}'".format(
+            ranger_url=settings.ranger_url,
+            auth_token=base64.b64encode(
+                '{ranger_user}:{ranger_password}'.format(
+                    ranger_user=settings.ranger_user,
+                    ranger_password=settings.ranger_password)),
+            content=json.dumps(template))
+          )
