@@ -170,3 +170,16 @@ def create_ranger_policy(resource, username, policy_name, policy_description,
                     ranger_password=settings.ranger_password)),
             content=json.dumps(template))
           )
+
+
+@task
+@roles('master')
+def delete_hive_database(database_name):
+    run('kinit -kt /etc/security/keytabs/hive.service.keytab {}'.format(
+        settings.hive_principal))
+    run('beeline -u "jdbc:hive2://{hive_url}/default;'
+        'principal={hive_principal};" '
+        '-e "DROP DATABASE {database_name}"'.format(
+            hive_url=settings.hive_url,
+            hive_principal=settings.hive_beeline_principal,
+            database_name=database_name))
