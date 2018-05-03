@@ -191,3 +191,11 @@ def create_hbase_namespace_hbase(namespace_name):
     run('kinit -kt /etc/security/keytabs/hbase.headless.keytab {}'.format(
         settings.hbase_principal))
     run('echo "create_namespace \'{}\'" | hbase shell'.format(namespace_name))
+
+
+@task
+@roles('master')
+def delete_hbase_namespace(namespace_name):
+    run('kinit -kt /etc/security/keytabs/hbase.headless.keytab {}'.format(
+        settings.hbase_principal))
+    run('echo "drop_namespace \'{}\'" | hbase shell'.format(namespace_name))
