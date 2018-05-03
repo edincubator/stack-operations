@@ -2,7 +2,6 @@
 # Host settings
 
 hosts = [
-
 ]
 
 
@@ -10,6 +9,10 @@ hosts = [
 
 kerberos_host = []
 kerberos_realm = ''
+kerberos_admin_principal = ''
+hdfs_principal = ''
+hive_principal = ''
+hbase_principal = ''
 
 # Mail settings
 
@@ -18,3 +21,20 @@ mail_port = 25
 mail_from = ''
 mail_user = ''
 mail_password = ''
+
+# Cluster settings
+
+master_host = ['']
+
+# Ranger settings
+
+ranger_url = ''
+ranger_user = ''
+ranger_password = ''
+ranger_cluster_name = ''
+
+
+# Hive settings
+
+hive_url = ''
+hive_beeline_principal = ''
