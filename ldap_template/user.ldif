@@ -1,0 +1,19 @@
+# User primary group
+dn: cn=$username,$group_search_base
+cn: $username
+objectClass: posixGroup
+gidNumber: $gid
+
+# User account
+dn: uid=$username,$user_search_base
+cn: $username
+givenName: $username
+sn: $username
+uid: $username
+uidNumber: $uid
+gidNumber: $gid
+homeDirectory: /user/$username
+objectClass: posixAccount
+objectClass: shadowAccount
+objectClass: inetOrgPerson
+userPassword: {ssha}$password

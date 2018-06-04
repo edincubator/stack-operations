@@ -1,32 +1,33 @@
 import base64
 import json
+import os
 import smtplib
-import uuid
 from email.mime.text import MIMEText
+from string import Template
+
+import requests
 
 import settings
-from fabric.api import env, execute, local, run
+from fabric.api import env, execute, local, put, run
 from fabric.decorators import roles, task
 
 env.user = 'root'
 env.roledefs = {
     'hosts': settings.hosts,
     'kerberos': settings.kerberos_host,
+    'ldap': settings.ldap_host,
     'master': settings.master_host
 }
 
 
 @task
 def create_user(username, mail):
-    principal = '{username}@{realm}'.format(username=username,
-                                            realm=settings.kerberos_realm)
-
-    kpass = execute(create_kerberos_user,
-                    ('{username}@{realm}'.format(
-                        username=username,
-                        realm=settings.kerberos_realm)))
+    password = os.urandom(6).encode('hex')
 
     execute(create_unix_user, username)
+    execute(create_ldap_user, username, password)
+    execute(create_kerberos_user, username, password)
+
     execute(create_hdfs_home, username)
     execute(create_ranger_policy,
             '/user/{}'.format(username),
@@ -36,8 +37,11 @@ def create_user(username, mail):
             'path',
             'hdfs'
             )
-    execute(send_password_mail, username, principal,
-            str(kpass.get(settings.kerberos_host[0])), mail)
+
+    principal = '{username}@{realm}'.format(username=username,
+                                            realm=settings.kerberos_realm)
+
+    execute(send_password_mail, username, principal, password, mail)
 
 
 @roles('hosts')
@@ -46,21 +50,39 @@ def create_unix_user(username):
     run('usermod -s /sbin/nologin {}'.format(username))
 
 
+@roles('ldap')
+def create_ldap_user(username, password):
+    uid = run('id -u {}'.format(username))
+    gid = run('id -u {}'.format(username))
+
+    args = {'username': username,
+            'group_search_base': settings.ldap_group_search_base,
+            'gid': gid,
+            'user_search_base': settings.ldap_user_search_base,
+            'uid': uid,
+            'password': password}
+
+    filein = open('ldap_template/user.ldif')
+    template = Template(filein.read())
+    user_ldif = template.substitute(args)
+    put(user_ldif, '/tmp/user.ldif')
+
+    run('ldapadd -cxWD {} -f /tmp/user.ldif'.format(settings.ldap_manager_dn))
+
+
 @roles('kerberos')
-def create_kerberos_user(principal, password=None):
-    if password is None:
-        password = uuid.uuid4()
-    run('kadmin -p {admin_principal} addprinc -pw {password} +needchange '
-        '{principal}'.format(
-            admin_principal=settings.kerberos_admin_principal,
-            password=password, principal=principal))
-    return password
+def create_kerberos_user(username, password):
+    run('addprinc -x dn="uid={username},{user_search_base} -pw {password}" '
+        '{username}'.format(username=username,
+                            user_search_base=settings.ldap_user_search_base)
+        )
 
 
 def send_password_mail(username, principal, password, mail):
     msg = MIMEText('''Welcome to EDI Big Data Stack!\n\n
-Those are your Kerberos credentials for accesing to the system:\n\n
-Principal: {principal}\n
+Those are your credentials for accesing to the system:\n\n
+LDAP username: {username}\n
+Kerberos Principal: {principal}\n
 Password: {password}'''.format(mail_from=settings.mail_from, to=mail,
                                principal=principal,
                                password=password))
@@ -136,6 +158,28 @@ def create_hive_database_beeline(database_name):
             hive_url=settings.hive_url,
             hive_principal=settings.hive_beeline_principal,
             database_name=database_name))
+
+
+def update_nifi_flow_ranger_policy(policy_id, username):
+    response = requests.get(
+        '{ranger_url}/service/public/v2/api/policy/{policy_id}'.format(
+            ranger_url=settings.ranger_url, policy_id=policy_id),
+        headers={'content-type': 'application/json'},
+        auth=(settings.ranger_user, settings.ranger_password))
+    policy = response.json()
+    policy['policyItems'][0]['users'].append(username)
+
+    local("curl -X PUT {ranger_url}/service/public/v2/api/policy/{policy_id} "
+          "-H 'authorization: Basic {auth_token}' "
+          "-H 'content-type: application/json' "
+          "-d '{content}'".format(
+            ranger_url=settings.ranger_url,
+            auth_token=base64.b64encode(
+                '{ranger_user}:{ranger_password}'.format(
+                    ranger_user=settings.ranger_user,
+                    ranger_password=settings.ranger_password)),
+            content=json.dumps(policy))
+          )
 
 
 def create_ranger_policy(resource, username, policy_name, policy_description,
