@@ -1,0 +1,4 @@
+dn: cn=$group,$group_search_base
+changetype: modify
+add: member
+member: uid=$username,$user_search_base

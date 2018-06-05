@@ -24,11 +24,15 @@ env.roledefs = {
 
 
 @task
-def create_user(username, mail):
+def create_user(username, mail, group=None):
     password = os.urandom(6).encode('hex')
 
     execute(create_unix_user, username)
     execute(create_ldap_user, username, password)
+
+    if group is not None:
+        execute(add_user_to_ldap_group, username, group)
+
     execute(create_kerberos_user, username, password)
 
     execute(update_ranger_usersync)
@@ -79,6 +83,26 @@ def create_ldap_user(username, password):
     put(output, '/tmp/user.ldif')
 
     run('ldapadd -cxWD {} -f /tmp/user.ldif'.format(settings.ldap_manager_dn))
+
+
+@roles('ldap')
+def add_user_to_ldap_group(username, group):
+    args = {'group': group,
+            'group_search_base': settings.ldap_group_search_base,
+            'username': username,
+            'user_search_base': settings.ldap_user_search_base}
+
+    filein = open('ldap_template/group.ldif')
+    template = Template(filein.read())
+    group_ldif = template.substitute(args)
+
+    output = StringIO.StringIO()
+    output.write(group_ldif)
+
+    put(output, '/tmp/group.ldif')
+
+    run('ldapmodify -xcWD {} -f /tmp/group.ldif'.format(
+        settings.ldap_manager_dn))
 
 
 def sync_ambari_users():
