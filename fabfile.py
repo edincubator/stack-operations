@@ -47,6 +47,7 @@ def create_user(username, mail):
     principal = '{username}@{realm}'.format(username=username,
                                             realm=settings.kerberos_realm)
 
+    execute(sync_ambari_users)
     execute(send_password_mail, username, principal, password, mail)
 
 
@@ -78,6 +79,21 @@ def create_ldap_user(username, password):
     put(output, '/tmp/user.ldif')
 
     run('ldapadd -cxWD {} -f /tmp/user.ldif'.format(settings.ldap_manager_dn))
+
+
+def sync_ambari_users():
+    content = [
+        {"Event":
+            {"specs":
+                [{"principal_type": "users", "sync_type": "all"},
+                 {"principal_type": "groups", "sync_type": "all"}]
+             }
+         }]
+
+    local("curl -u admin -H 'X-Requested-By: ambari' -X POST -d "
+          "'{content}' {ambari_url}/api/v1/ldap_sync_events".format(
+            content=json.dumps(content),
+            ambari_url=settings.ambari_url))
 
 
 def make_secret(password):
