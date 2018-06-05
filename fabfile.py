@@ -1,7 +1,9 @@
 import base64
+import hashlib
 import json
 import os
 import smtplib
+import StringIO
 from email.mime.text import MIMEText
 from string import Template
 
@@ -16,7 +18,8 @@ env.roledefs = {
     'hosts': settings.hosts,
     'kerberos': settings.kerberos_host,
     'ldap': settings.ldap_host,
-    'master': settings.master_host
+    'master': settings.master_host,
+    'ranger': settings.ranger_host
 }
 
 
@@ -28,6 +31,8 @@ def create_user(username, mail):
     execute(create_ldap_user, username, password)
     execute(create_kerberos_user, username, password)
 
+    execute(update_ranger_usersync)
+
     execute(create_hdfs_home, username)
     execute(create_ranger_policy,
             '/user/{}'.format(username),
@@ -35,8 +40,9 @@ def create_user(username, mail):
             'hdfs_home_{}'.format(username),
             'HDFS home directory for user {}'.format(username),
             'path',
-            'hdfs'
+            'hadoop'
             )
+    execute(update_nifi_flow_ranger_policy, username)
 
     principal = '{username}@{realm}'.format(username=username,
                                             realm=settings.kerberos_realm)
@@ -60,21 +66,55 @@ def create_ldap_user(username, password):
             'gid': gid,
             'user_search_base': settings.ldap_user_search_base,
             'uid': uid,
-            'password': password}
+            'password': make_secret(password)}
 
     filein = open('ldap_template/user.ldif')
     template = Template(filein.read())
     user_ldif = template.substitute(args)
-    put(user_ldif, '/tmp/user.ldif')
+
+    output = StringIO.StringIO()
+    output.write(user_ldif)
+
+    put(output, '/tmp/user.ldif')
 
     run('ldapadd -cxWD {} -f /tmp/user.ldif'.format(settings.ldap_manager_dn))
 
 
+def make_secret(password):
+    """
+    Encodes the given password as a base64 SSHA hash+salt buffer
+    """
+    salt = os.urandom(4)
+
+    # hash the password and append the salt
+    sha = hashlib.sha1(password)
+    sha.update(salt)
+
+    # create a base64 encoded string of the concatenated digest + salt
+    digest_salt_b64 = '{}{}'.format(sha.digest(),
+                                    salt).encode('base64').strip()
+
+    return digest_salt_b64
+
+
+@roles('ranger')
+def update_ranger_usersync():
+    run('/usr/jdk64/jdk1.8.0_112/bin/java -Dlogdir=/var/log/ranger/usersync '
+        '-cp "/usr/hdp/current/ranger-usersync/dist/'
+        'unixusersync-0.7.0.2.6.5.0-292.jar:/usr/hdp/current/ranger-usersync'
+        '/dist/ranger-usersync-1.0-SNAPSHOT.jar:/usr/hdp/current/'
+        'ranger-usersync/lib/*:/etc/ranger/usersync/conf" '
+        'org.apache.ranger.usergroupsync.UserGroupSyncTrigger')
+
+
 @roles('kerberos')
 def create_kerberos_user(username, password):
-    run('addprinc -x dn="uid={username},{user_search_base} -pw {password}" '
+    run('kadmin -p {admin_principal} addprinc -x '
+        'dn="uid={username},{user_search_base}" -pw {password} '
         '{username}'.format(username=username,
-                            user_search_base=settings.ldap_user_search_base)
+                            user_search_base=settings.ldap_user_search_base,
+                            password=password,
+                            admin_principal=settings.kerberos_admin_principal)
         )
 
 
@@ -83,7 +123,7 @@ def send_password_mail(username, principal, password, mail):
 Those are your credentials for accesing to the system:\n\n
 LDAP username: {username}\n
 Kerberos Principal: {principal}\n
-Password: {password}'''.format(mail_from=settings.mail_from, to=mail,
+Password: {password}'''.format(username=username,
                                principal=principal,
                                password=password))
     msg['Subject'] = "[European Data Incubator] Big Data Stack Credentials"
@@ -160,20 +200,23 @@ def create_hive_database_beeline(database_name):
             database_name=database_name))
 
 
-def update_nifi_flow_ranger_policy(policy_id, username):
+def update_nifi_flow_ranger_policy(username):
     response = requests.get(
         '{ranger_url}/service/public/v2/api/policy/{policy_id}'.format(
-            ranger_url=settings.ranger_url, policy_id=policy_id),
+            ranger_url=settings.ranger_url,
+            policy_id=settings.nifi_ranger_flow_policy_id),
         headers={'content-type': 'application/json'},
-        auth=(settings.ranger_user, settings.ranger_password))
+        auth=(settings.ranger_user, settings.ranger_password),
+        verify=False)
     policy = response.json()
     policy['policyItems'][0]['users'].append(username)
 
     local("curl -X PUT {ranger_url}/service/public/v2/api/policy/{policy_id} "
           "-H 'authorization: Basic {auth_token}' "
           "-H 'content-type: application/json' "
-          "-d '{content}'".format(
+          "-d '{content}' -k".format(
             ranger_url=settings.ranger_url,
+            policy_id=settings.nifi_ranger_flow_policy_id,
             auth_token=base64.b64encode(
                 '{ranger_user}:{ranger_password}'.format(
                     ranger_user=settings.ranger_user,
@@ -195,7 +238,7 @@ def create_ranger_policy(resource, username, policy_name, policy_description,
     local("curl -X POST {ranger_url}/service/public/v2/api/policy "
           "-H 'authorization: Basic {auth_token}' "
           "-H 'content-type: application/json' "
-          "-d '{content}'".format(
+          "-d '{content}' -k".format(
             ranger_url=settings.ranger_url,
             auth_token=base64.b64encode(
                 '{ranger_user}:{ranger_password}'.format(
