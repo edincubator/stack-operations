@@ -251,7 +251,7 @@ def create_hive_database(database_name, username):
             'HDFS directory for HIVE database {database}'.format(
                 database=database_name),
             'path',
-            'hdfs'
+            'hadoop'
             )
 
 
