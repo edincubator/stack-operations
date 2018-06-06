@@ -187,9 +187,7 @@ def create_hdfs_home(username):
 
 @task
 def delete_user(username):
-    principal = '{username}@{realm}'.format(username=username,
-                                            realm=settings.kerberos_realm)
-    execute(delete_kerberos_user, principal)
+    execute(delete_ldap_user, username)
     execute(delete_unix_user, username)
 
 
@@ -198,11 +196,14 @@ def delete_unix_user(username):
     run('userdel {}'.format(username))
 
 
-@roles('kerberos')
-def delete_kerberos_user(principal):
-    run('kadmin -p {admin_principal} delete_principal {principal}'.format(
-        principal=principal,
-        admin_principal=settings.kerberos_admin_principal))
+@roles('ldap')
+def delete_ldap_user(username):
+    run('ldapdelete -xcWD {manager_dn} '
+        '"uid={username},{user_search_base}"'.format(
+            manager_dn=settings.ldap_manager_dn,
+            username=username,
+            user_search_base=settings.ldap_user_search_base
+        ))
 
 
 @task
