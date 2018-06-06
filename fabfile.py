@@ -9,6 +9,7 @@ from string import Template
 
 import requests
 
+import regex
 import settings
 from fabric.api import env, execute, local, put, run
 from fabric.decorators import roles, task
@@ -82,7 +83,10 @@ def create_ldap_user(username, password):
 
     put(output, '/tmp/user.ldif')
 
-    run('ldapadd -cxWD {} -f /tmp/user.ldif'.format(settings.ldap_manager_dn))
+    run('ldapadd -cxD {manager_dn} -w {manager_password} '
+        '-f /tmp/user.ldif'.format(
+            manager_dn=settings.ldap_manager_dn,
+            manager_password=settings.ldap_manager_password))
 
 
 @roles('ldap')
@@ -101,8 +105,10 @@ def add_user_to_ldap_group(username, group):
 
     put(output, '/tmp/group.ldif')
 
-    run('ldapmodify -xcWD {} -f /tmp/group.ldif'.format(
-        settings.ldap_manager_dn))
+    run('ldapmodify -xcD {manager_dn} -w {manager_password} '
+        '-f /tmp/group.ldif'.format(
+            manager_dn=settings.ldap_manager_dn,
+            manager_password=settings.ldap_manager_password))
 
 
 def sync_ambari_users():
@@ -198,9 +204,29 @@ def delete_unix_user(username):
 
 @roles('ldap')
 def delete_ldap_user(username):
-    run('ldapdelete -xcWD {manager_dn} '
+    output = run('ldapsearch -D "{manager_dn}" -w {manager_password} '
+                 '-b "{user_search_base}" "uid={username}" "memberOf"'.format(
+                    manager_dn=settings.ldap_manager_dn,
+                    manager_password=settings.ldap_manager_password,
+                    user_search_base=settings.ldap_user_search_base,
+                    username=username
+                 ))
+    result = regex.search(r'memberOf: ([\w=,]+)', output)
+    if result is not None:
+        if len(result.groups()) > 0:
+            group = result.groups()[0]
+
+            run('ldapdelete -xcD {manager_dn} -w {manager_password} '
+                '"{group}"'.format(
+                    manager_dn=settings.ldap_manager_dn,
+                    manager_password=settings.ldap_manager_password,
+                    group=group
+                ))
+
+    run('ldapdelete -xcD {manager_dn} -w {manager_password} '
         '"uid={username},{user_search_base}"'.format(
             manager_dn=settings.ldap_manager_dn,
+            manager_password=settings.ldap_manager_password,
             username=username,
             user_search_base=settings.ldap_user_search_base
         ))

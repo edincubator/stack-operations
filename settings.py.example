@@ -4,6 +4,13 @@
 hosts = [
 ]
 
+# LDAP settings
+
+ldap_host = ['']
+ldap_user_search_base = ''
+ldap_group_search_base= ''
+ldap_manager_dn = ''
+ldap_manager_password = ''
 
 # Kerberos settings
 
@@ -13,6 +20,10 @@ kerberos_admin_principal = ''
 hdfs_principal = ''
 hive_principal = ''
 hbase_principal = ''
+
+# Ambari settings
+
+ambari_url = ''
 
 # Mail settings
 
@@ -28,6 +39,7 @@ master_host = ['']
 
 # Ranger settings
 
+ranger_host = ['']
 ranger_url = ''
 ranger_user = ''
 ranger_password = ''
@@ -38,3 +50,6 @@ ranger_cluster_name = ''
 
 hive_url = ''
 hive_beeline_principal = ''
+
+# Nifi settings
+nifi_ranger_flow_policy_id = ''
