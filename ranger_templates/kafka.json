@@ -1,0 +1,52 @@
+{
+	"service": "",
+	"name": "",
+	"policyType": 0,
+	"description": "",
+	"resourceSignature": "fb5b7254074deb8270f7a430409c0babcbafb1452daa1600fcffe4fb93c844dd",
+	"isAuditEnabled": true,
+	"resources": {
+		"topic": {
+			"values": [
+
+      ],
+			"isExcludes": false,
+			"isRecursive": false
+		}
+	},
+	"policyItems": [{
+		"accesses": [{
+			"type": "publish",
+			"isAllowed": true
+		}, {
+			"type": "consume",
+			"isAllowed": true
+		}, {
+			"type": "configure",
+			"isAllowed": true
+		}, {
+			"type": "describe",
+			"isAllowed": true
+		}, {
+			"type": "create",
+			"isAllowed": true
+		}, {
+			"type": "delete",
+			"isAllowed": true
+		}, {
+			"type": "kafka_admin",
+			"isAllowed": true
+		}],
+		"users": [
+
+    ],
+		"groups": [],
+		"conditions": [],
+		"delegateAdmin": true
+	}],
+	"denyPolicyItems": [],
+	"allowExceptions": [],
+	"denyExceptions": [],
+	"dataMaskPolicyItems": [],
+	"rowFilterPolicyItems": []
+}
