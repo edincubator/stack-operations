@@ -1,0 +1,4 @@
+dn: $group
+changetype: modify
+delete: member
+member: uid=$username,$user_search_base

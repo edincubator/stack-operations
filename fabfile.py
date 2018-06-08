@@ -216,20 +216,26 @@ def delete_ldap_user(username):
         if len(result.groups()) > 0:
             group = result.groups()[0]
 
-            run('ldapdelete -xcD {manager_dn} -w {manager_password} '
-                '"{group}"'.format(
-                    manager_dn=settings.ldap_manager_dn,
-                    manager_password=settings.ldap_manager_password,
-                    group=group
-                ))
+            args = {
+                'group': group,
+                'username': username,
+                'user_search_base': settings.ldap_user_search_base
+            }
 
-    run('ldapdelete -xcD {manager_dn} -w {manager_password} '
-        '"uid={username},{user_search_base}"'.format(
-            manager_dn=settings.ldap_manager_dn,
-            manager_password=settings.ldap_manager_password,
-            username=username,
-            user_search_base=settings.ldap_user_search_base
-        ))
+            filein = open('ldap_template/delete_member.ldif')
+            template = Template(filein.read())
+            delete_member_ldif = template.substitute(args)
+
+            output = StringIO.StringIO()
+            output.write(delete_member_ldif)
+
+            put(output, '/tmp/delete_member.ldif')
+
+            run('ldapmodify -xcD "{manager_dn}" -w {manager_password} '
+                '-f /tmp/delete_member.ldif'.format(
+                    manager_dn=settings.ldap_manager_dn,
+                    manager_password=settings.ldap_manager_password
+                ))
 
 
 @task
