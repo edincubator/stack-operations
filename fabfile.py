@@ -195,6 +195,7 @@ def create_hdfs_home(username):
 def delete_user(username):
     execute(delete_ldap_user, username)
     execute(delete_unix_user, username)
+    execute(sync_ambari_users)
 
 
 @roles('hosts')
@@ -236,6 +237,14 @@ def delete_ldap_user(username):
                     manager_dn=settings.ldap_manager_dn,
                     manager_password=settings.ldap_manager_password
                 ))
+
+    run('ldapdelete -xcD {manager_dn} -w {manager_password} '
+        '"uid={username},{user_search_base}"'.format(
+            manager_dn=settings.ldap_manager_dn,
+            manager_password=settings.ldap_manager_password,
+            username=username,
+            user_search_base=settings.ldap_user_search_base
+            ))
 
 
 @task
