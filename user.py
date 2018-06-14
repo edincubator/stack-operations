@@ -3,6 +3,7 @@ import json
 import os
 import smtplib
 import StringIO
+import uuid
 from email.mime.text import MIMEText
 from string import Template
 
@@ -38,6 +39,7 @@ def new(c, username, mail, group=None):
         add_user_to_ldap_group(ldap_connection, username, group)
 
     create_kerberos_user(kerberos_connection, username, password)
+    folder_uuid, file_uuid = create_nifi_keytab(kerberos_connection, username)
 
     ranger.update_ranger_usersync(ranger_connection)
 
@@ -52,11 +54,8 @@ def new(c, username, mail, group=None):
             )
     ranger.update_nifi_flow_ranger_policy(username)
 
-    principal = '{username}@{realm}'.format(username=username,
-                                            realm=settings.kerberos_realm)
-
     sync_ambari_users()
-    send_password_mail(username, principal, password, mail)
+    send_password_mail(username, password, mail, folder_uuid, file_uuid)
 
 
 def create_unix_user(c, username):
@@ -129,14 +128,45 @@ def add_user_to_ldap_group(c, username, group):
 
 
 def create_kerberos_user(c, username, password):
-    c.run('kadmin -p {admin_principal} addprinc -x '
+    c.run('kadmin -p {admin_principal} -w {admin_password} addprinc -x '
           'dn="uid={username},{user_search_base}" -pw {password} '
           '{username}'.format(
             username=username,
             user_search_base=settings.ldap_user_search_base,
             password=password,
-            admin_principal=settings.kerberos_admin_principal), pty=True
+            admin_principal=settings.kerberos_admin_principal,
+            admin_password=settings.kerberos_admin_password), pty=True
           )
+
+
+def create_nifi_keytab(c, username):
+    folder_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, settings.master_host)
+    file_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, settings.master_host)
+    principal = '{username}@{realm}'.format(username=username,
+                                            realm=settings.kerberos_realm)
+
+    c.run('mkdir /home/nifi/{folder_uuid}'.format(folder_uuid=folder_uuid))
+
+    c.run('kadmin -p {admin_principal} -w {admin_password} -q "xst '
+          '-norandkey -k /home/nifi/{folder_uuid}/{file_uuid}.keytab '
+          '{principal}"'.format(
+            admin_principal=settings.kerberos_admin_principal,
+            admin_password=settings.kerberos_admin_password,
+            folder_uuid=folder_uuid,
+            file_uuid=file_uuid,
+            principal=principal
+          ))
+    c.run('chown {username}:hadoop /home/nifi/{folder_uuid}/'
+          '{file_uuid}.keytab'.format(
+            username=username,
+            folder_uuid=folder_uuid,
+            file_uuid=file_uuid
+          ))
+    c.run('chmod 400 /home/nifi/{folder_uuid}/{file_uuid}.keytab'.format(
+        folder_uuid=folder_uuid, file_uuid=file_uuid
+    ))
+
+    return folder_uuid, file_uuid
 
 
 def create_hdfs_home(c, username):
@@ -160,14 +190,22 @@ def sync_ambari_users():
             ambari_url=settings.ambari_url), pty=True)
 
 
-def send_password_mail(username, principal, password, mail):
+def send_password_mail(username, password, mail, folder_uuid, file_uuid):
+    principal = '{username}@{realm}'.format(username=username,
+                                            realm=settings.kerberos_realm)
     msg = MIMEText('''Welcome to EDI Big Data Stack!\n\n
 Those are your credentials for accesing to the system:\n\n
 LDAP username: {username}\n
 Kerberos Principal: {principal}\n
-Password: {password}'''.format(username=username,
-                               principal=principal,
-                               password=password))
+Password: {password}\n
+NiFi keytab: {keytab}'''.format(
+        username=username,
+        principal=principal,
+        password=password,
+        keytab='{folder_uuid}/{file_uuid}.keytab'.format(
+            folder_uuid=folder_uuid,
+            file_uuid=file_uuid
+        )))
     msg['Subject'] = "[European Data Incubator] Big Data Stack Credentials"
     msg['From'] = "EDI - European Data Incubator <{}>".format(
         settings.mail_from)
