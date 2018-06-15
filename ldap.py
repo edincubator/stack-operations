@@ -3,6 +3,7 @@ import os
 import StringIO
 from string import Template
 
+import regex
 import settings
 
 
@@ -51,6 +52,58 @@ def add_user_to_ldap_group(c, username, group):
           '-f /tmp/group.ldif'.format(
             manager_dn=settings.ldap_manager_dn,
             manager_password=settings.ldap_manager_password))
+
+
+def delete_ldap_user(c, username):
+    output = c.run(
+        'ldapsearch -D "{manager_dn}" -w {manager_password} '
+        '-b "{user_search_base}" "uid={username}" "memberOf"'.format(
+                    manager_dn=settings.ldap_manager_dn,
+                    manager_password=settings.ldap_manager_password,
+                    user_search_base=settings.ldap_user_search_base,
+                    username=username
+        )).stdout
+    result = regex.search(r'memberOf: ([\w=,]+)', output)
+    if result is not None:
+        if len(result.groups()) > 0:
+            group = result.groups()[0]
+
+            args = {
+                'group': group,
+                'username': username,
+                'user_search_base': settings.ldap_user_search_base
+            }
+
+            filein = open('ldap_template/delete_member.ldif')
+            template = Template(filein.read())
+            delete_member_ldif = template.substitute(args)
+
+            output = StringIO.StringIO()
+            output.write(delete_member_ldif)
+
+            c.put(output, '/tmp/delete_member.ldif')
+
+            c.run('ldapmodify -xcD "{manager_dn}" -w {manager_password} '
+                  '-f /tmp/delete_member.ldif'.format(
+                    manager_dn=settings.ldap_manager_dn,
+                    manager_password=settings.ldap_manager_password
+                  ))
+
+    c.run('ldapdelete -xcD {manager_dn} -w {manager_password} '
+          '"uid={username},{user_search_base}"'.format(
+            manager_dn=settings.ldap_manager_dn,
+            manager_password=settings.ldap_manager_password,
+            username=username,
+            user_search_base=settings.ldap_user_search_base
+            ))
+
+    c.run('ldapdelete -xcD {manager_dn} -w {manager_password} '
+          '"cn={username},{group_search_base}"'.format(
+            manager_dn=settings.ldap_manager_dn,
+            manager_password=settings.ldap_manager_password,
+            username=username,
+            group_search_base=settings.ldap_group_search_base
+          ))
 
 
 def make_secret(password):

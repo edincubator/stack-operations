@@ -59,6 +59,18 @@ def new(c, username, mail, group=None):
     send_password_mail(username, password, mail, folder_uuid, file_uuid)
 
 
+@task(help={'username': 'Username of the user to be deleted'})
+def delete(c, username):
+    """
+    Deletes a user from the system.
+    """
+    ldap.delete_ldap_user(ldap_connection, username)
+    for host in settings.hosts:
+        c = Connection(host, user)
+        unix.delete_unix_user(c, username)
+    sync_ambari_users()
+
+
 def sync_ambari_users():
     content = [
         {"Event":

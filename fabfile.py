@@ -1,89 +1,9 @@
-import base64
-import hashlib
-import json
-import os
-import smtplib
-import StringIO
-from email.mime.text import MIMEText
-from string import Template
-
-import requests
-
-from invoke import task, Collection
 import user
-
-import regex
-import settings
+from invoke import Collection
 
 namespace = Collection(user)
 
-# env.user = 'root'
-# env.roledefs = {
-#     'hosts': settings.hosts,
-#     'kerberos': settings.kerberos_host,
-#     'ldap': settings.ldap_host,
-#     'master': settings.master_host,
-#     'ranger': settings.ranger_host
-# }
-#
-#
-#
-# @task
-# def delete_user(username):
-#     execute(delete_ldap_user, username)
-#     execute(delete_unix_user, username)
-#     execute(sync_ambari_users)
-#
-#
-# @roles('hosts')
-# def delete_unix_user(username):
-#     run('userdel {}'.format(username))
-#
-#
-# @roles('ldap')
-# def delete_ldap_user(username):
-#     output = run('ldapsearch -D "{manager_dn}" -w {manager_password} '
-#                  '-b "{user_search_base}" "uid={username}" "memberOf"'.format(
-#                     manager_dn=settings.ldap_manager_dn,
-#                     manager_password=settings.ldap_manager_password,
-#                     user_search_base=settings.ldap_user_search_base,
-#                     username=username
-#                  ))
-#     result = regex.search(r'memberOf: ([\w=,]+)', output)
-#     if result is not None:
-#         if len(result.groups()) > 0:
-#             group = result.groups()[0]
-#
-#             args = {
-#                 'group': group,
-#                 'username': username,
-#                 'user_search_base': settings.ldap_user_search_base
-#             }
-#
-#             filein = open('ldap_template/delete_member.ldif')
-#             template = Template(filein.read())
-#             delete_member_ldif = template.substitute(args)
-#
-#             output = StringIO.StringIO()
-#             output.write(delete_member_ldif)
-#
-#             put(output, '/tmp/delete_member.ldif')
-#
-#             run('ldapmodify -xcD "{manager_dn}" -w {manager_password} '
-#                 '-f /tmp/delete_member.ldif'.format(
-#                     manager_dn=settings.ldap_manager_dn,
-#                     manager_password=settings.ldap_manager_password
-#                 ))
-#
-#     run('ldapdelete -xcD {manager_dn} -w {manager_password} '
-#         '"uid={username},{user_search_base}"'.format(
-#             manager_dn=settings.ldap_manager_dn,
-#             manager_password=settings.ldap_manager_password,
-#             username=username,
-#             user_search_base=settings.ldap_user_search_base
-#             ))
-#
-#
+
 # @task
 # def create_hive_database(database_name, username):
 #     execute(create_hive_database_beeline, database_name)
