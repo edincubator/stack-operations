@@ -16,7 +16,7 @@ def new(c, database, username):
     """
     create_hive_database_beeline(master_connection, database)
     ranger.create_ranger_policy(
-            database,
+            [database],
             username,
             'hive_{}'.format(database),
             'HIVE database {}'.format(database),
@@ -24,8 +24,8 @@ def new(c, database, username):
             'hive'
             )
     ranger.create_ranger_policy(
-            '/apps/hive/warehouse/{database}.db'.format(
-                database=database),
+            ['/apps/hive/warehouse/{database}.db'.format(
+                database=database)],
             username,
             'hdfs_hive_{database}'.format(database=database),
             'HDFS directory for HIVE database {database}'.format(

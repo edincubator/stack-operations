@@ -32,7 +32,7 @@ def new(c, username, topic, partitions=1, replication_factor=1):
         ))
 
     ranger.create_ranger_policy(
-            topic,
+            [topic],
             username,
             'kafka_{}'.format(topic),
             'kafka policy for topic {}'.format(topic),

@@ -23,7 +23,7 @@ def create_ranger_policy(resource, username, policy_name, policy_description,
         cluster_name=settings.ranger_cluster_name, service=service)
     template['name'] = policy_name
     template['description'] = policy_description
-    template['resources'][resource_type]['values'].append(resource)
+    template['resources'][resource_type]['values'].extend(resource)
     template['policyItems'][0]['users'].append(username)
 
     run("curl -X POST {ranger_url}/service/public/v2/api/policy "

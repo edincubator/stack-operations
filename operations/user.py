@@ -46,7 +46,7 @@ def new(c, username, mail, group=None):
 
     hdfs.create_hdfs_home(master_connection, username)
     ranger.create_ranger_policy(
-            '/user/{}'.format(username),
+            ['/user/{}'.format(username)],
             username,
             'hdfs_home_{}'.format(username),
             'HDFS home directory for user {}'.format(username),
