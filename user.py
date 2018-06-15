@@ -1,14 +1,14 @@
-import hashlib
 import json
 import os
 import smtplib
-import StringIO
-import uuid
 from email.mime.text import MIMEText
-from string import Template
 
+import hdfs
+import kerberos
+import ldap
 import ranger
 import settings
+import unix
 from fabric.connection import Connection
 from invoke import run, task
 
@@ -31,19 +31,20 @@ def new(c, username, mail, group=None):
 
     for host in settings.hosts:
         c = Connection(host, user)
-        create_unix_user(c, username)
+        unix.create_unix_user(c, username)
 
-    create_ldap_user(ldap_connection, username, password)
+    ldap.create_ldap_user(ldap_connection, username, password)
 
     if group is not None:
-        add_user_to_ldap_group(ldap_connection, username, group)
+        ldap.add_user_to_ldap_group(ldap_connection, username, group)
 
-    create_kerberos_user(kerberos_connection, username, password)
-    folder_uuid, file_uuid = create_nifi_keytab(kerberos_connection, username)
+    kerberos.create_kerberos_user(kerberos_connection, username, password)
+    folder_uuid, file_uuid = kerberos.create_nifi_keytab(
+        kerberos_connection, username)
 
     ranger.update_ranger_usersync(ranger_connection)
 
-    create_hdfs_home(master_connection, username)
+    hdfs.create_hdfs_home(master_connection, username)
     ranger.create_ranger_policy(
             '/user/{}'.format(username),
             username,
@@ -56,123 +57,6 @@ def new(c, username, mail, group=None):
 
     sync_ambari_users()
     send_password_mail(username, password, mail, folder_uuid, file_uuid)
-
-
-def create_unix_user(c, username):
-    c.run('adduser {}'.format(username))
-    c.run('usermod -s /sbin/nologin {}'.format(username))
-
-
-def create_ldap_user(c, username, password):
-    uid = c.run('id -u {}'.format(username)).stdout.strip()
-    gid = c.run('id -u {}'.format(username)).stdout.strip()
-
-    args = {'username': username,
-            'group_search_base': settings.ldap_group_search_base,
-            'gid': gid,
-            'user_search_base': settings.ldap_user_search_base,
-            'uid': uid,
-            'password': make_secret(password)}
-
-    filein = open('ldap_template/user.ldif')
-    template = Template(filein.read())
-    user_ldif = template.substitute(args)
-
-    output = StringIO.StringIO()
-    output.write(user_ldif)
-
-    c.put(output, '/tmp/user.ldif')
-
-    c.run('ldapadd -cxD {manager_dn} -w {manager_password} '
-          '-f /tmp/user.ldif'.format(
-            manager_dn=settings.ldap_manager_dn,
-            manager_password=settings.ldap_manager_password))
-
-
-def make_secret(password):
-    """
-    Encodes the given password as a base64 SSHA hash+salt buffer
-    """
-    salt = os.urandom(4)
-
-    # hash the password and append the salt
-    sha = hashlib.sha1(password)
-    sha.update(salt)
-
-    # create a base64 encoded string of the concatenated digest + salt
-    digest_salt_b64 = '{}{}'.format(sha.digest(),
-                                    salt).encode('base64').strip()
-
-    return digest_salt_b64
-
-
-def add_user_to_ldap_group(c, username, group):
-    args = {'group': group,
-            'group_search_base': settings.ldap_group_search_base,
-            'username': username,
-            'user_search_base': settings.ldap_user_search_base}
-
-    filein = open('ldap_template/group.ldif')
-    template = Template(filein.read())
-    group_ldif = template.substitute(args)
-
-    output = StringIO.StringIO()
-    output.write(group_ldif)
-
-    c.put(output, '/tmp/group.ldif')
-
-    c.run('ldapmodify -xcD {manager_dn} -w {manager_password} '
-          '-f /tmp/group.ldif'.format(
-            manager_dn=settings.ldap_manager_dn,
-            manager_password=settings.ldap_manager_password))
-
-
-def create_kerberos_user(c, username, password):
-    c.run('kadmin -p {admin_principal} -w {admin_password} addprinc -x '
-          'dn="uid={username},{user_search_base}" -pw {password} '
-          '{username}'.format(
-            username=username,
-            user_search_base=settings.ldap_user_search_base,
-            password=password,
-            admin_principal=settings.kerberos_admin_principal,
-            admin_password=settings.kerberos_admin_password), pty=True
-          )
-
-
-def create_nifi_keytab(c, username):
-    folder_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, settings.master_host)
-    file_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, settings.master_host)
-    principal = '{username}@{realm}'.format(username=username,
-                                            realm=settings.kerberos_realm)
-
-    c.run('mkdir /home/nifi/{folder_uuid}'.format(folder_uuid=folder_uuid))
-
-    c.run('kadmin -p {admin_principal} -w {admin_password} -q "xst '
-          '-norandkey -k /home/nifi/{folder_uuid}/{file_uuid}.keytab '
-          '{principal}"'.format(
-            admin_principal=settings.kerberos_admin_principal,
-            admin_password=settings.kerberos_admin_password,
-            folder_uuid=folder_uuid,
-            file_uuid=file_uuid,
-            principal=principal
-          ))
-    c.run('chown {username}:hadoop /home/nifi/{folder_uuid}/'
-          '{file_uuid}.keytab'.format(
-            username=username,
-            folder_uuid=folder_uuid,
-            file_uuid=file_uuid
-          ))
-    c.run('chmod 400 /home/nifi/{folder_uuid}/{file_uuid}.keytab'.format(
-        folder_uuid=folder_uuid, file_uuid=file_uuid
-    ))
-
-    return folder_uuid, file_uuid
-
-
-def create_hdfs_home(c, username):
-    c.run('kinit -kt /etc/security/keytabs/hdfs.headless.keytab {}'.format(
-        settings.hdfs_principal))
-    c.run('hdfs dfs -mkdir /user/{}'.format(username))
 
 
 def sync_ambari_users():
