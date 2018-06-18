@@ -11,7 +11,7 @@ def grant_processgroup(c, process_group_id, username):
     """
     ranger.create_ranger_policy(
         ['/process-groups/{id}'.format(id=process_group_id),
-         '/data/{id}'.format(id=process_group_id)],
+         '/data/process-groups/{id}'.format(id=process_group_id)],
         username,
         'Process group {id}'.format(id=process_group_id),
         'Policy for NiFi process group {id}'.format(id=process_group_id),
