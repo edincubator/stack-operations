@@ -10,4 +10,5 @@ Welcome to European Data Incubator Internal Documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   installation/index
    operations/index
