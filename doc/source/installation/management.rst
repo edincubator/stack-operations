@@ -4,7 +4,10 @@ Management node
 System setup
 ------------
 
-  Ensure that the FQDN is set checking the output of `hostname -f`
+* Ensure that the FQDN is set checking the output of `hostname -f`
+* Add FQDN from all hosts to /etc/hosts.
+* Comment the following line from /etc/hosts: `127.0.0.1	<fqdn>	<hostname>`.
+
 
 .. code-block:: console
 
@@ -184,6 +187,29 @@ When finished configure Kerberos service:
   # systemctl enable krb5kdc
   # systemctl enable kadmin
 
+Change Kerbero's admin principal password:
+
+.. code-block:: console
+
+  # sudo kadmin.local
+  kadmin.local:  cpw kadmin/admin@EDINCUBATOR.EU
+  Enter password for principal "kadmin/admin@EDINCUBATOR.EU":
+  Re-enter password for principal "kadmin/admin@EDINCUBATOR.EU":
+  Password for "kadmin/admin@EDINCUBATOR.EU" changed.
+  kadmin.local:
+
+Edit `/var/kerberos/krb5kdc/kadm5.acl`:
+
+.. code-block:: vim
+
+  */admin@EDINCUBATOR.EU	*
+
+
+.. warning::
+
+  When configuring Kerberos for Ambari, sometimes Ambari modified `/etc/krb5.conf`
+  file and Kerberos stops working!
+
 
 Installing Ambari
 -----------------
@@ -210,11 +236,16 @@ Deploying a cluster
 ...................
 
 After enabling LDAP and SSL, follow the following steps for deploying a cluster: https://docs.hortonworks.com/HDPDocuments/Ambari-2.6.2.2/bk_ambari-installation/content/ch_Deploy_and_Configure_a_HDP_Cluster.html.
-Deploy only the minimal components before enabling Kerberos.
+Deploy only the minimal components before enabling Kerberos (all components because Ambari Metrics needs HBase).
 
 
 Enabling Kerberos for Ambari
 ............................
 
 Follow steps at https://docs.hortonworks.com/HDPDocuments/Ambari-2.6.2.2/bk_ambari-security/content/ch_configuring_amb_hdp_for_kerberos.html.
+
+.. warning::
+
+  Disable `Manage Kerberos client krb5.conf` under `Advanced krb5-conf`.
+
 After enabling Kerberos, proceed to deploy the rest of the components of the cluster.
