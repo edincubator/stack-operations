@@ -236,7 +236,8 @@ Deploying a cluster
 ...................
 
 After enabling LDAP and SSL, follow the following steps for deploying a cluster: https://docs.hortonworks.com/HDPDocuments/Ambari-2.6.2.2/bk_ambari-installation/content/ch_Deploy_and_Configure_a_HDP_Cluster.html.
-Deploy only the minimal components before enabling Kerberos (all components because Ambari Metrics needs HBase).
+Deploy only the minimal components before enabling Kerberos (Zookeeper + HDFS).
+It is recommended to install clients in all nodes.
 
 
 Enabling Kerberos for Ambari
@@ -249,3 +250,24 @@ Follow steps at https://docs.hortonworks.com/HDPDocuments/Ambari-2.6.2.2/bk_amba
   Disable `Manage Kerberos client krb5.conf` under `Advanced krb5-conf`.
 
 After enabling Kerberos, proceed to deploy the rest of the components of the cluster.
+
+
+Installing MySQL and enabling on Ambari
+.......................................
+
+Follow tutorial at: https://www.digitalocean.com/community/tutorials/how-to-install-mariadb-on-centos-7
+
+Library need by Ambari:
+
+.. code-block:: console
+
+  # wget https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.11.tar.gz
+  # tar -xf mysql-connector-java-8.0.11.tar.gz
+
+For tools that need a MySQL database:
+
+.. code-block:: console
+
+  # CREATE DATABASE <databasename>;
+  # CREATE USER '<username>'@'%' IDENTIFIED BY '<password>';
+  # GRANT ALL ON <databasename>.* TO '<username>'@'%';
