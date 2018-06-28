@@ -271,3 +271,61 @@ For tools that need a MySQL database:
   # CREATE DATABASE <databasename>;
   # CREATE USER '<username>'@'%' IDENTIFIED BY '<password>';
   # GRANT ALL ON <databasename>.* TO '<username>'@'%';
+
+
+
+Installing NiFi
+---------------
+
+Not documented because it doesn't work with two hops (VM -> Host Server -> My laptop)
+
+
+Enabling SSL for Ranger
+-----------------------
+
+* Follow instructions at: https://docs.hortonworks.com/HDPDocuments/HDP2/HDP-2.5.0/bk_security/content/configure_ambari_ranger_ssl.html.
+* How to convert trustedCertEntry into privateKeyEntry: https://www.manualesfaciles.com/gestionar-certificado-como-privatekeyentry/.
+
+
+Configuring Ranger plugins for SSL
+..................................
+
+* Enable plugin at Ranger config.
+* Export Ranger certificate:
+
+.. code-block:: console
+
+ # $JAVA_HOME/bin/keytool -export -keystore ranger-admin-keystore.jks -alias <cert-alias> -file /etc/security/certs/ranger/ranger-admin-trust.cer
+
+* For each plugin, create plugin keystore and truststore and import Ranger certificate:
+
+.. code-block:: console
+
+  # keytool -genkey -keyalg RSA -alias ranger<tool>Agent -keystore ranger-<tool>-keystore.jks -storepass <myKeyFilePassword> -validity 360 -keysize 2048
+  # chown <toolUser>:<toolGroup> ranger-<tool>-keystore.jks
+  # chmod 400 ranger-<tool>-keystore.jks
+  # keytool -import -file ranger-admin-trust.cer -alias <cert-alias> -keystore ranger-<tool>-truststore.jks -storepass <trustStorePassword>
+  # chown <toolUser>:<toolGroup> ranger-<tool>-truststore.jks
+  # chmod 400 ranger-<tool>-truststore.jks
+
+
+* Configure `Advanced ranger-<tool>-policymgr-ssl` at tool's configuration:
+
+.. code-block:: properties
+
+  xasecure.policymgr.clientssl.keystore=/etc/security/certs/ranger/ranger-<tool>-keystore.jks
+  xasecure.policymgr.clientssl.keystore.password=<myKeyFilePassword>
+  xasecure.policymgr.clientssl.truststore=/etc/security/certs/ranger/ranger-<tool>-truststore.jks
+  xasecure.policymgr.clientssl.truststore.password=<trustStorePassword>
+
+* Import tool's certificate into ranger:
+
+.. code-block:: console
+
+  # keytool -export -keystore ranger-<tool>-keystore.jks -alias ranger<tool>Agent -file ranger-<tool>-trust.cer
+  # keytool -import -file ranger-<tool>-trust.cer -alias ranger<tool>AgentTrust -keystore /usr/hdp/current/ranger-admin/conf/ranger-admin-keystore.jks
+
+
+* Give proper access rights to `.cred.jceks.crc` file.
+
+* Restart Ranger and HDFS.
