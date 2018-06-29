@@ -326,6 +326,6 @@ Configuring Ranger plugins for SSL
   # keytool -import -file ranger-<tool>-trust.cer -alias ranger<tool>AgentTrust -keystore /usr/hdp/current/ranger-admin/conf/ranger-admin-keystore.jks
 
 
-* Give proper access rights to `.cred.jceks.crc` file.
+* Give proper access rights to `.cred.jceks.crc` file at `/etc/ranger/<plugin >/`.
 
 * Restart Ranger and HDFS.
