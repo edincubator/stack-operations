@@ -202,7 +202,7 @@ Edit `/var/kerberos/krb5kdc/kadm5.acl`:
 
 .. code-block:: vim
 
-  */admin@EDINCUBATOR.EU	*
+  */admin@EDINCUBATOR.EU	e*
 
 
 .. warning::
