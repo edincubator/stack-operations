@@ -15,8 +15,8 @@ def update_ranger_usersync(c):
           'org.apache.ranger.usergroupsync.UserGroupSyncTrigger')
 
 
-def create_ranger_policy(c, resource, username, policy_name, policy_description,
-                         resource_type, service):
+def create_ranger_policy(c, resource, username, policy_name,
+                         policy_description, resource_type, service):
     template = json.load(open('ranger_templates/{}.json'.format(service), 'r'))
     template['service'] = '{cluster_name}_{service}'.format(
         cluster_name=c.config.ranger_cluster_name, service=service)
