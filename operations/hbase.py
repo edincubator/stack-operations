@@ -4,6 +4,7 @@ from invoke import task
 
 user = 'root'
 
+
 @task(help={'namespace': 'HBase namespace to be created',
             'username': 'User owner of the namespace'})
 def new(c, namespace, username):
@@ -23,7 +24,7 @@ def new(c, namespace, username):
 
 def create_hbase_namespace_hbase(c, namespace_name):
     c.run('kinit -kt /etc/security/keytabs/hbase.headless.keytab {}'.format(
-        settings.hbase_principal))
+        c.config.get('hbase_principal')))
     c.run('echo "create_namespace \'{}\'" | hbase shell'.format(
         namespace_name))
 
