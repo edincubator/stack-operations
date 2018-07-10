@@ -329,3 +329,39 @@ Configuring Ranger plugins for SSL
 * Give proper access rights to `.cred.jceks.crc` file at `/etc/ranger/<plugin >/`.
 
 * Restart Ranger and HDFS.
+
+
+Zeppelin
+--------
+
+* Install Zeppelin through Ambari.
+* Set `zeppelin.interpreter.config.upgrade` to false in `Advanced zeppelin-config`.
+* In `shiro_ini_content` from `Advanced zeppelin-shiro-ini`, replace admin's
+  password and comment other users, set the following LDAP properties and URL
+  permissions.
+
+.. code-block:: ini
+
+  ### A sample for configuring LDAP Directory Realm
+  ldapRealm = org.apache.zeppelin.realm.LdapGroupRealm
+  ## search base for ldap groups (only relevant for LdapGroupRealm):
+  ldapRealm.contextFactory.environment[ldap.searchBase] = ou=People,dc=....
+  ldapRealm.contextFactory.url = ldaps://host:636
+  ldapRealm.userDnTemplate = uid={0},ou=People,dc=....
+  ldapRealm.contextFactory.authenticationMechanism = SIMPLE
+
+  [urls]
+  # This section is used for url-based security.
+  # You can secure interpreter, configuration and credential information by urls. Comment or uncomment the below urls that you want to hide.
+  # anon means the access is anonymous.
+  # authc means Form based Auth Security
+  # To enfore security, comment the line below and uncomment the next one
+  /api/version = anon
+  /api/interpreter/** = authc, roles[admin]
+  /api/configurations/** = authc, roles[admin]
+  /api/credential/** = authc, roles[admin]
+  #/** = anon
+  /** = authc
+
+* Include the certificate from LDAPS in JAVA keystore.
+* At Zeppelin web UI, disable sh and spark interpreters.
