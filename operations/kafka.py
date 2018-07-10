@@ -4,6 +4,7 @@ from invoke import task
 
 user = 'root'
 
+
 @task(help={'username': 'User owner of the topic',
             'topic': 'Name of the topic to be created',
             'partitions': 'Number of partitions',

@@ -90,7 +90,7 @@ def delete_ldap_user(c, username):
 
     c.run('ldapdelete -xcD {manager_dn} -w {manager_password} '
           '"uid={username},{user_search_base}"'.format(
-            manager_dn=settings.ldap_manager_dn,
+            manager_dn=c.config.ldap_manager_dn,
             manager_password=c.config.ldap_manager_password,
             username=username,
             user_search_base=c.config.ldap_user_search_base

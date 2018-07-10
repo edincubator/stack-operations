@@ -24,7 +24,7 @@ def new(c, namespace, username):
 
 def create_hbase_namespace_hbase(c, namespace_name):
     c.run('kinit -kt /etc/security/keytabs/hbase.headless.keytab {}'.format(
-        c.config.get('hbase_principal')))
+        c.config.hbase_principal))
     c.run('echo "create_namespace \'{}\'" | hbase shell'.format(
         namespace_name))
 

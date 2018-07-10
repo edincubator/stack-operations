@@ -4,6 +4,7 @@ from invoke import task
 
 user = 'root'
 
+
 @task(help={'database': 'Name of the database to be created',
             'username': 'User owner of the database'})
 def new(c, database, username):
@@ -37,7 +38,7 @@ def delete(c, database):
     """
     Deletes a Hive database.
     """
-    master_connection = Connection(settings.master_host, user)
+    master_connection = Connection(c.config.master_host, user)
     master_connection.run(
         'kinit -kt /etc/security/keytabs/hive.service.keytab {}'.format(
             c.config.hive_principal))
