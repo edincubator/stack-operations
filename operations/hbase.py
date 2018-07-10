@@ -13,7 +13,7 @@ def new(c, namespace, username):
     master_connection = Connection(c.config.master_host, user)
     create_hbase_namespace_hbase(master_connection, namespace)
     ranger.create_ranger_policy(
-            ['{}:*'.format(namespace)],
+            ['{}.*'.format(namespace)],
             username,
             'hbase_{}'.format(namespace),
             'Hbase policy for namespace {}'.format(namespace),
