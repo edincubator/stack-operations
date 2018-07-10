@@ -32,22 +32,25 @@ def new(c, username, mail, group=None):
         connection = Connection(host, user)
         unix.create_unix_user(connection, username)
 
-    ldap_connection = Connection(c.config.ldap_host, user)
+    ldap_connection = Connection(c.config.ldap_host, user, config=c.config)
     ldap.create_ldap_user(ldap_connection, username, password)
     if group is not None:
         ldap.add_user_to_ldap_group(ldap_connection, username, group)
 
-    kerberos_connection = Connection(c.config.kerberos_host, user)
+    kerberos_connection = Connection(c.config.kerberos_host, user, config=c.config)
     kerberos.create_kerberos_user(kerberos_connection, username, password)
+    
+    nifi_connection = Connection(c.config.master_host, user, config=c.config)
     folder_uuid, file_uuid = kerberos.create_nifi_keytab(
-        kerberos_connection, username)
+        nifi_connection, username)
 
     ranger_connection = Connection(c.config.ranger_host, user)
     ranger.update_ranger_usersync(ranger_connection)
 
-    master_connection = Connection(c.config.master_host, user)
+    master_connection = Connection(c.config.master_host, user, config=c.config)
     hdfs.create_hdfs_home(master_connection, username)
     ranger.create_ranger_policy(
+	    c,
             ['/user/{}'.format(username)],
             username,
             'hdfs_home_{}'.format(username),
@@ -55,9 +58,9 @@ def new(c, username, mail, group=None):
             'path',
             'hadoop'
             )
-    ranger.update_nifi_flow_ranger_policy(username)
+    ranger.update_nifi_flow_ranger_policy(c, username)
 
-    sync_ambari_users()
+    sync_ambari_users(c)
     send_password_mail(c, username, password, mail, folder_uuid, file_uuid)
 
 
