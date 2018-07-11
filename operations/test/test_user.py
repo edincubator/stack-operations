@@ -158,7 +158,8 @@ class TestUser(object):
         assert ambari_connection.value.host == c.host
         assert mail_connection.value.host == c.host
 
-        verify(unix, times=3).create_unix_user(ANY(Connection), username)
+        verify(unix, times=len(c.config.hosts)).create_unix_user(
+            ANY(Connection), username)
         verify(ldap).create_ldap_user(ldap_connection, username, ANY)
         verify(ldap).add_user_to_ldap_group(
             ldap_group_connection, username, group)
@@ -182,6 +183,33 @@ class TestUser(object):
                                         user_mail, folder_uuid, file_uuid)
 
         verify(ldap, times=0).add_user_to_ldap_group()
+
+        unstub()
+
+    def test_delete(self):
+        username = 'username'
+
+        c = Connection('root')
+        c.config.username = username
+        c.config.hosts = ['host1', 'host2', 'host3']
+        c.config.ldap_host = 'ldap.host'
+
+        ldap_connection = captor(ANY(Connection))
+        ambari_connection = captor(ANY(Connection))
+
+        when(ldap).delete_ldap_user(ldap_connection, username)
+        when(unix).delete_unix_user(ANY(Connection), username)
+        when(user).sync_ambari_users(ambari_connection)
+
+        user.delete(c, username)
+
+        assert ldap_connection.value.host == c.config.ldap_host
+        assert ambari_connection.value.host == c.host
+
+        verify(ldap).delete_ldap_user(ldap_connection, username)
+        verify(unix, times=len(c.config.hosts)).delete_unix_user(
+            ANY(Connection), username)
+        verify(user).sync_ambari_users(ambari_connection)
 
         unstub()
 

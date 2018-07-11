@@ -1,6 +1,7 @@
 [
   "operations/test/test_user.py::TestUser::()::test_new_no_group", 
   "operations/test/test_user.py::TestUser::()::test_new_group", 
+  "operations/test/test_user.py::TestUser::()::test_delete", 
   "operations/test/test_user.py::TestUser::()::test_sync_ambari_users", 
   "operations/test/test_user.py::TestUser::()::test_send_password_mail"
 ]
