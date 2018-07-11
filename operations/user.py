@@ -9,7 +9,7 @@ import ldap
 import ranger
 import unix
 from fabric.connection import Connection
-from invoke import run, task
+import invoke
 
 user = 'root'
 
@@ -19,9 +19,9 @@ user = 'root'
 # master_connection = Connection(settings.master_host, user)
 
 
-@task(help={'username': 'Username of the user to be created',
-            'mail': 'Mail address for sending credentials',
-            'group': 'The group user belongs to'})
+@invoke.task(help={'username': 'Username of the user to be created',
+                   'mail': 'Mail address for sending credentials',
+                   'group': 'The group user belongs to'})
 def new(c, username, mail, group=None):
     """
     Creates a new user in the system.
@@ -65,7 +65,7 @@ def new(c, username, mail, group=None):
     send_password_mail(c, username, password, mail, folder_uuid, file_uuid)
 
 
-@task(help={'username': 'Username of the user to be deleted'})
+@invoke.task(help={'username': 'Username of the user to be deleted'})
 def delete(c, username):
     """
     Deletes a user from the system.
@@ -87,10 +87,10 @@ def sync_ambari_users(c):
              }
          }]
 
-    run("curl -u admin -H 'X-Requested-By: ambari' -X POST -d "
-        "'{content}' {ambari_url}/api/v1/ldap_sync_events".format(
-            content=json.dumps(content),
-            ambari_url=c.config.ambari_url), pty=True)
+    invoke.run("curl -u admin -H 'X-Requested-By: ambari' -X POST -d "
+               "'{content}' {ambari_url}/api/v1/ldap_sync_events".format(
+                content=json.dumps(content),
+                ambari_url=c.config.ambari_url), pty=True)
 
 
 def send_password_mail(c, username, password, mail, folder_uuid, file_uuid):
