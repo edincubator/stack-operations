@@ -3,6 +3,7 @@
   "operations/test/test_hbase.py::TestHbase::()::test_create_hbase_namespace_hbase", 
   "operations/test/test_hbase.py::TestHbase::()::test_delete_hbase_namespace", 
   "operations/test/test_hbase.py::TestHbase::()::test_delete", 
+  "operations/test/test_hdfs.py::TestHdfs::()::test_create_hdfs_home", 
   "operations/test/test_user.py::TestUser::()::test_new_no_group", 
   "operations/test/test_user.py::TestUser::()::test_new_group", 
   "operations/test/test_user.py::TestUser::()::test_delete", 
