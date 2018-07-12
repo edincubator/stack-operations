@@ -14,6 +14,7 @@ def new(c, namespace, username):
     master_connection = Connection(c.config.master_host, user)
     create_hbase_namespace_hbase(master_connection, namespace)
     ranger.create_ranger_policy(
+            c,
             ['{}.*'.format(namespace)],
             username,
             'hbase_{}'.format(namespace),
@@ -35,8 +36,12 @@ def delete(c, namespace):
     Deletes a HBase namespace.
     """
     master_connection = Connection(c.config.master_host, user)
-    master_connection.run(
+    delete_hbase_namespace(master_connection, namespace)
+
+
+def delete_hbase_namespace(c, namespace):
+    c.run(
         'kinit -kt /etc/security/keytabs/hbase.headless.keytab {}'.format(
             c.config.hbase_principal))
-    master_connection.run('echo "drop_namespace \'{}\'" | hbase shell'.format(
+    c.run('echo "drop_namespace \'{}\'" | hbase shell'.format(
         namespace))
