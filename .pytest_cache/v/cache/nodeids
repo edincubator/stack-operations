@@ -10,6 +10,8 @@
   "operations/test/test_hive.py::TestHive::()::test_create_hive_database_beeline", 
   "operations/test/test_kafka.py::TestKafka::()::test_new", 
   "operations/test/test_kafka.py::TestKafka::()::test_new_kafka_topic", 
+  "operations/test/test_kerberos.py::TestKerberos::()::test_create_kerberos_user", 
+  "operations/test/test_kerberos.py::TestKerberos::()::test_create_nifi_keytab", 
   "operations/test/test_user.py::TestUser::()::test_new_no_group", 
   "operations/test/test_user.py::TestUser::()::test_new_group", 
   "operations/test/test_user.py::TestUser::()::test_delete", 
