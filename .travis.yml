@@ -6,6 +6,7 @@ install:
   - pip install -r operations/requirements.txt
 # command to run tests
 script:
-  - pytest --cov=operations operations/test # or py.test for Python versions 3.5 and below
+  - cd operations
+  - pytest --cov=operations test # or py.test for Python versions 3.5 and below
 after_success:
 - coveralls

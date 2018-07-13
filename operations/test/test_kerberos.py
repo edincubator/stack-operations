@@ -1,7 +1,7 @@
 import uuid
 
 from fabric.connection import Connection
-from mockito import ANY, unstub, verify, when
+from mockito import unstub, verify, when
 from operations import kerberos
 
 

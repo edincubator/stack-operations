@@ -1,1 +1,3 @@
-{}
+{
+  "operations/test/test_ldap.py::TestLdap::()::test_create_ldap_user": true
+}
