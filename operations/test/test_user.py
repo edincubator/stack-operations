@@ -60,14 +60,31 @@ class TestUser(object):
         user.new(c, username, usermail)
 
         assert ldap_connection.value.host == c.config.ldap_host
+        assert ldap_connection.value.config == c.config
+
         assert kerberos_create_connection.value.host == c.config.kerberos_host
+        assert kerberos_create_connection.value.config == c.config
+
         assert kerberos_nifi_connection.value.host == c.config.master_host
+        assert kerberos_nifi_connection.value.config == c.config
+
         assert ranger_update_connection.value.host == c.config.ranger_host
+        assert ranger_update_connection.value.config == c.config
+
         assert hdfs_connection.value.host == c.config.master_host
+        assert hdfs_connection.value.config == c.config
+
         assert ranger_create_connection.value.host == c.host
+        assert ranger_create_connection.value.config == c.config
+
         assert ranger_nifi_connection.value.host == c.host
+        assert ranger_nifi_connection.value.config == c.config
+
         assert ambari_connection.value.host == c.host
+        assert ambari_connection.value.config == c.config
+
         assert mail_connection.value.host == c.host
+        assert mail_connection.value.config == c.config
 
         verify(unix, times=3).create_unix_user(ANY(Connection), username)
         verify(ldap).create_ldap_user(ldap_connection, username, ANY)

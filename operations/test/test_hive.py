@@ -37,6 +37,7 @@ class TestHive(object):
 
         hive.new(c, database, username)
 
+        assert hive_connection.value.config == c.config
         assert hive_connection.value.host == c.config.master_host
 
         verify(ranger).create_ranger_policy(
@@ -76,6 +77,7 @@ class TestHive(object):
 
         verify(hive).delete_hive_database(master_connection, database)
 
+        assert master_connection.value.config == c.config
         assert master_connection.value.host == c.config.master_host
         unstub()
 

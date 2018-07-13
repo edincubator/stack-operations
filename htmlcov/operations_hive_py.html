@@ -150,7 +150,7 @@
 <p id="t11" class="pln">    <span class="str">"""</span><span class="strut">&nbsp;</span></p>
 <p id="t12" class="pln"><span class="str">    Creates a new Hive database and gives ownership to a user.</span><span class="strut">&nbsp;</span></p>
 <p id="t13" class="pln"><span class="str">    """</span><span class="strut">&nbsp;</span></p>
-<p id="t14" class="stm run hide_run">    <span class="nam">master_connection</span> <span class="op">=</span> <span class="nam">Connection</span><span class="op">(</span><span class="nam">c</span><span class="op">.</span><span class="nam">config</span><span class="op">.</span><span class="nam">master_host</span><span class="op">,</span> <span class="nam">user</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t14" class="stm run hide_run">    <span class="nam">master_connection</span> <span class="op">=</span> <span class="nam">Connection</span><span class="op">(</span><span class="nam">c</span><span class="op">.</span><span class="nam">config</span><span class="op">.</span><span class="nam">master_host</span><span class="op">,</span> <span class="nam">user</span><span class="op">,</span> <span class="nam">config</span><span class="op">=</span><span class="nam">c</span><span class="op">.</span><span class="nam">config</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
 <p id="t15" class="stm run hide_run">    <span class="nam">create_hive_database_beeline</span><span class="op">(</span><span class="nam">master_connection</span><span class="op">,</span> <span class="nam">database</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
 <p id="t16" class="stm run hide_run">    <span class="nam">ranger</span><span class="op">.</span><span class="nam">create_ranger_policy</span><span class="op">(</span><span class="strut">&nbsp;</span></p>
 <p id="t17" class="pln">            <span class="nam">c</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
@@ -179,7 +179,7 @@
 <p id="t40" class="pln">    <span class="str">"""</span><span class="strut">&nbsp;</span></p>
 <p id="t41" class="pln"><span class="str">    Deletes a Hive database.</span><span class="strut">&nbsp;</span></p>
 <p id="t42" class="pln"><span class="str">    """</span><span class="strut">&nbsp;</span></p>
-<p id="t43" class="stm run hide_run">    <span class="nam">master_connection</span> <span class="op">=</span> <span class="nam">Connection</span><span class="op">(</span><span class="nam">c</span><span class="op">.</span><span class="nam">config</span><span class="op">.</span><span class="nam">master_host</span><span class="op">,</span> <span class="nam">user</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t43" class="stm run hide_run">    <span class="nam">master_connection</span> <span class="op">=</span> <span class="nam">Connection</span><span class="op">(</span><span class="nam">c</span><span class="op">.</span><span class="nam">config</span><span class="op">.</span><span class="nam">master_host</span><span class="op">,</span> <span class="nam">user</span><span class="op">,</span> <span class="nam">config</span><span class="op">=</span><span class="nam">c</span><span class="op">.</span><span class="nam">config</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
 <p id="t44" class="stm run hide_run">    <span class="nam">delete_hive_database</span><span class="op">(</span><span class="nam">master_connection</span><span class="op">,</span> <span class="nam">database</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
 <p id="t45" class="pln"><span class="strut">&nbsp;</span></p>
 <p id="t46" class="pln"><span class="strut">&nbsp;</span></p>
@@ -214,7 +214,7 @@
     <div class="content">
         <p>
             <a class="nav" href="index.html">&#xab; index</a> &nbsp; &nbsp; <a class="nav" href="https://coverage.readthedocs.io">coverage.py v4.5.1</a>,
-            created at 2018-07-12 14:14
+            created at 2018-07-13 12:32
         </p>
     </div>
 </div>

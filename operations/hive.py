@@ -11,7 +11,7 @@ def new(c, database, username):
     """
     Creates a new Hive database and gives ownership to a user.
     """
-    master_connection = Connection(c.config.master_host, user)
+    master_connection = Connection(c.config.master_host, user, config=c.config)
     create_hive_database_beeline(master_connection, database)
     ranger.create_ranger_policy(
             c,
@@ -40,7 +40,7 @@ def delete(c, database):
     """
     Deletes a Hive database.
     """
-    master_connection = Connection(c.config.master_host, user)
+    master_connection = Connection(c.config.master_host, user, config=c.config)
     delete_hive_database(master_connection, database)
 
 

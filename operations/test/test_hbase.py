@@ -27,6 +27,7 @@ class TestHbase(object):
 
         hbase.new(c, namespace, username)
 
+        assert hbase_connection.value.config == c.config
         assert hbase_connection.value.host == c.config.master_host
 
         verify(hbase).create_hbase_namespace_hbase(hbase_connection, namespace)
@@ -92,6 +93,7 @@ class TestHbase(object):
         hbase.delete(c, namespace)
 
         verify(hbase).delete_hbase_namespace(master_connection, namespace)
+        assert master_connection.value.config == c.config
         assert master_connection.value.host == c.config.master_host
 
         unstub()

@@ -45,7 +45,7 @@ def new(c, username, mail, group=None):
     folder_uuid, file_uuid = kerberos.create_nifi_keytab(
         nifi_connection, username)
 
-    ranger_connection = Connection(c.config.ranger_host, user)
+    ranger_connection = Connection(c.config.ranger_host, user, config=c.config)
     ranger.update_ranger_usersync(ranger_connection)
 
     master_connection = Connection(c.config.master_host, user, config=c.config)

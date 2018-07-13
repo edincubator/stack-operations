@@ -11,7 +11,7 @@ def new(c, namespace, username):
     """
     Creates a new HBase namespace and gives ownership to user.
     """
-    master_connection = Connection(c.config.master_host, user)
+    master_connection = Connection(c.config.master_host, user, config=c.config)
     create_hbase_namespace_hbase(master_connection, namespace)
     ranger.create_ranger_policy(
             c,
@@ -35,7 +35,7 @@ def delete(c, namespace):
     """
     Deletes a HBase namespace.
     """
-    master_connection = Connection(c.config.master_host, user)
+    master_connection = Connection(c.config.master_host, user, config=c.config)
     delete_hbase_namespace(master_connection, namespace)
 
 

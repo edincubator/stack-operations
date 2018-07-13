@@ -130,7 +130,7 @@
 <p id="t11" class="pln">    <span class="str">"""</span><span class="strut">&nbsp;</span></p>
 <p id="t12" class="pln"><span class="str">    Creates a new HBase namespace and gives ownership to user.</span><span class="strut">&nbsp;</span></p>
 <p id="t13" class="pln"><span class="str">    """</span><span class="strut">&nbsp;</span></p>
-<p id="t14" class="stm run hide_run">    <span class="nam">master_connection</span> <span class="op">=</span> <span class="nam">Connection</span><span class="op">(</span><span class="nam">c</span><span class="op">.</span><span class="nam">config</span><span class="op">.</span><span class="nam">master_host</span><span class="op">,</span> <span class="nam">user</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t14" class="stm run hide_run">    <span class="nam">master_connection</span> <span class="op">=</span> <span class="nam">Connection</span><span class="op">(</span><span class="nam">c</span><span class="op">.</span><span class="nam">config</span><span class="op">.</span><span class="nam">master_host</span><span class="op">,</span> <span class="nam">user</span><span class="op">,</span> <span class="nam">config</span><span class="op">=</span><span class="nam">c</span><span class="op">.</span><span class="nam">config</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
 <p id="t15" class="stm run hide_run">    <span class="nam">create_hbase_namespace_hbase</span><span class="op">(</span><span class="nam">master_connection</span><span class="op">,</span> <span class="nam">namespace</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
 <p id="t16" class="stm run hide_run">    <span class="nam">ranger</span><span class="op">.</span><span class="nam">create_ranger_policy</span><span class="op">(</span><span class="strut">&nbsp;</span></p>
 <p id="t17" class="pln">            <span class="nam">c</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
@@ -154,7 +154,7 @@
 <p id="t35" class="pln">    <span class="str">"""</span><span class="strut">&nbsp;</span></p>
 <p id="t36" class="pln"><span class="str">    Deletes a HBase namespace.</span><span class="strut">&nbsp;</span></p>
 <p id="t37" class="pln"><span class="str">    """</span><span class="strut">&nbsp;</span></p>
-<p id="t38" class="stm run hide_run">    <span class="nam">master_connection</span> <span class="op">=</span> <span class="nam">Connection</span><span class="op">(</span><span class="nam">c</span><span class="op">.</span><span class="nam">config</span><span class="op">.</span><span class="nam">master_host</span><span class="op">,</span> <span class="nam">user</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t38" class="stm run hide_run">    <span class="nam">master_connection</span> <span class="op">=</span> <span class="nam">Connection</span><span class="op">(</span><span class="nam">c</span><span class="op">.</span><span class="nam">config</span><span class="op">.</span><span class="nam">master_host</span><span class="op">,</span> <span class="nam">user</span><span class="op">,</span> <span class="nam">config</span><span class="op">=</span><span class="nam">c</span><span class="op">.</span><span class="nam">config</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
 <p id="t39" class="stm run hide_run">    <span class="nam">delete_hbase_namespace</span><span class="op">(</span><span class="nam">master_connection</span><span class="op">,</span> <span class="nam">namespace</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
 <p id="t40" class="pln"><span class="strut">&nbsp;</span></p>
 <p id="t41" class="pln"><span class="strut">&nbsp;</span></p>
@@ -174,7 +174,7 @@
     <div class="content">
         <p>
             <a class="nav" href="index.html">&#xab; index</a> &nbsp; &nbsp; <a class="nav" href="https://coverage.readthedocs.io">coverage.py v4.5.1</a>,
-            created at 2018-07-12 13:10
+            created at 2018-07-13 12:32
         </p>
     </div>
 </div>

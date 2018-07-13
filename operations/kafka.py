@@ -13,12 +13,17 @@ def new(c, username, topic, partitions=1, replication_factor=1):
     """
     Creates a new Kafka topic and gives ownership to user.
     """
-    master_connection = Connection(c.config.master_host, user)
-    master_connection.run(
+    master_connection = Connection(c.config.master_host, user, config=c.config)
+    new_kafka_topic(master_connection, username, topic, partitions,
+                    replication_factor)
+
+
+def new_kafka_topic(c, username, topic, partitions, replication_factor):
+    c.run(
         'kinit -kt /etc/security/keytabs/hdfs.headless.keytab {}'.format(
             c.config.hdfs_principal))
 
-    master_connection.run(
+    c.run(
         '{client_dir}/bin/kafka-topics.sh --create --zookeeper '
         '{zookeeper_servers} --topic {topic} --partitions {partitions} '
         '--replication-factor {replication_factor}'.format(
@@ -30,9 +35,10 @@ def new(c, username, topic, partitions=1, replication_factor=1):
         ))
 
     ranger.create_ranger_policy(
-            [topic],
-            username,
-            'kafka_{}'.format(topic),
-            'kafka policy for topic {}'.format(topic),
-            'topic',
-            'kafka')
+        c,
+        [topic],
+        username,
+        'kafka_{}'.format(topic),
+        'kafka policy for topic {}'.format(topic),
+        'topic',
+        'kafka')
