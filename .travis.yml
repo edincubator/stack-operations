@@ -1,0 +1,12 @@
+language: python
+python:
+  - "2.7"
+# command to install dependencies
+install:
+  - pip install -r operations/requirements.txt
+# command to run tests
+script:
+  - cd operations
+  - pytest --cov=operations test # or py.test for Python versions 3.5 and below
+after_success:
+- coveralls

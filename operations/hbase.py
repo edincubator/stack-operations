@@ -1,11 +1,8 @@
 import ranger
-import settings
 from fabric.connection import Connection
 from invoke import task
 
 user = 'root'
-
-master_connection = Connection(settings.master_host, user)
 
 
 @task(help={'namespace': 'HBase namespace to be created',
@@ -14,9 +11,11 @@ def new(c, namespace, username):
     """
     Creates a new HBase namespace and gives ownership to user.
     """
+    master_connection = Connection(c.config.master_host, user, config=c.config)
     create_hbase_namespace_hbase(master_connection, namespace)
     ranger.create_ranger_policy(
-            ['{}:*'.format(namespace)],
+            c,
+            ['{}.*'.format(namespace)],
             username,
             'hbase_{}'.format(namespace),
             'Hbase policy for namespace {}'.format(namespace),
@@ -26,7 +25,7 @@ def new(c, namespace, username):
 
 def create_hbase_namespace_hbase(c, namespace_name):
     c.run('kinit -kt /etc/security/keytabs/hbase.headless.keytab {}'.format(
-        settings.hbase_principal))
+        c.config.hbase_principal))
     c.run('echo "create_namespace \'{}\'" | hbase shell'.format(
         namespace_name))
 
@@ -36,8 +35,13 @@ def delete(c, namespace):
     """
     Deletes a HBase namespace.
     """
-    master_connection.run(
+    master_connection = Connection(c.config.master_host, user, config=c.config)
+    delete_hbase_namespace(master_connection, namespace)
+
+
+def delete_hbase_namespace(c, namespace):
+    c.run(
         'kinit -kt /etc/security/keytabs/hbase.headless.keytab {}'.format(
-            settings.hbase_principal))
-    master_connection.run('echo "drop_namespace \'{}\'" | hbase shell'.format(
+            c.config.hbase_principal))
+    c.run('echo "drop_namespace \'{}\'" | hbase shell'.format(
         namespace))

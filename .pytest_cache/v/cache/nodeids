@@ -1,0 +1,21 @@
+[
+  "operations/test/test_hbase.py::TestHbase::()::test_new", 
+  "operations/test/test_hbase.py::TestHbase::()::test_create_hbase_namespace_hbase", 
+  "operations/test/test_hbase.py::TestHbase::()::test_delete_hbase_namespace", 
+  "operations/test/test_hbase.py::TestHbase::()::test_delete", 
+  "operations/test/test_hdfs.py::TestHdfs::()::test_create_hdfs_home", 
+  "operations/test/test_hive.py::TestHive::()::test_new", 
+  "operations/test/test_hive.py::TestHive::()::test_delete", 
+  "operations/test/test_hive.py::TestHive::()::test_delete_hive_database", 
+  "operations/test/test_hive.py::TestHive::()::test_create_hive_database_beeline", 
+  "operations/test/test_kafka.py::TestKafka::()::test_new", 
+  "operations/test/test_kafka.py::TestKafka::()::test_new_kafka_topic", 
+  "operations/test/test_kerberos.py::TestKerberos::()::test_create_kerberos_user", 
+  "operations/test/test_kerberos.py::TestKerberos::()::test_create_nifi_keytab", 
+  "operations/test/test_ldap.py::TestLdap::()::test_create_ldap_user", 
+  "operations/test/test_user.py::TestUser::()::test_new_no_group", 
+  "operations/test/test_user.py::TestUser::()::test_new_group", 
+  "operations/test/test_user.py::TestUser::()::test_delete", 
+  "operations/test/test_user.py::TestUser::()::test_sync_ambari_users", 
+  "operations/test/test_user.py::TestUser::()::test_send_password_mail"
+]

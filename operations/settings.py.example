@@ -53,3 +53,12 @@ hive_beeline_principal = ''
 
 # Nifi settings
 nifi_ranger_flow_policy_id = ''
+
+# Kafka settings
+
+kafka_client_dir = ''
+
+# Zookeeper settings
+
+zookeeper_servers = [
+]

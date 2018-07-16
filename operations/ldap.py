@@ -4,7 +4,6 @@ import StringIO
 from string import Template
 
 import regex
-import settings
 
 
 def create_ldap_user(c, username, password):
@@ -12,9 +11,9 @@ def create_ldap_user(c, username, password):
     gid = c.run('id -u {}'.format(username)).stdout.strip()
 
     args = {'username': username,
-            'group_search_base': settings.ldap_group_search_base,
+            'group_search_base': c.config.ldap_group_search_base,
             'gid': gid,
-            'user_search_base': settings.ldap_user_search_base,
+            'user_search_base': c.config.ldap_user_search_base,
             'uid': uid,
             'password': make_secret(password)}
 
@@ -29,15 +28,15 @@ def create_ldap_user(c, username, password):
 
     c.run('ldapadd -cxD {manager_dn} -w {manager_password} '
           '-f /tmp/user.ldif'.format(
-            manager_dn=settings.ldap_manager_dn,
-            manager_password=settings.ldap_manager_password))
+            manager_dn=c.config.ldap_manager_dn,
+            manager_password=c.config.ldap_manager_password))
 
 
 def add_user_to_ldap_group(c, username, group):
     args = {'group': group,
-            'group_search_base': settings.ldap_group_search_base,
+            'group_search_base': c.config.ldap_group_search_base,
             'username': username,
-            'user_search_base': settings.ldap_user_search_base}
+            'user_search_base': c.config.ldap_user_search_base}
 
     filein = open('ldap_template/group.ldif')
     template = Template(filein.read())
@@ -50,17 +49,17 @@ def add_user_to_ldap_group(c, username, group):
 
     c.run('ldapmodify -xcD {manager_dn} -w {manager_password} '
           '-f /tmp/group.ldif'.format(
-            manager_dn=settings.ldap_manager_dn,
-            manager_password=settings.ldap_manager_password))
+            manager_dn=c.config.ldap_manager_dn,
+            manager_password=c.config.ldap_manager_password))
 
 
 def delete_ldap_user(c, username):
     output = c.run(
         'ldapsearch -D "{manager_dn}" -w {manager_password} '
         '-b "{user_search_base}" "uid={username}" "memberOf"'.format(
-                    manager_dn=settings.ldap_manager_dn,
-                    manager_password=settings.ldap_manager_password,
-                    user_search_base=settings.ldap_user_search_base,
+                    manager_dn=c.config.ldap_manager_dn,
+                    manager_password=c.config.ldap_manager_password,
+                    user_search_base=c.config.ldap_user_search_base,
                     username=username
         )).stdout
     result = regex.search(r'memberOf: ([\w=,]+)', output)
@@ -71,7 +70,7 @@ def delete_ldap_user(c, username):
             args = {
                 'group': group,
                 'username': username,
-                'user_search_base': settings.ldap_user_search_base
+                'user_search_base': c.config.ldap_user_search_base
             }
 
             filein = open('ldap_template/delete_member.ldif')
@@ -85,24 +84,24 @@ def delete_ldap_user(c, username):
 
             c.run('ldapmodify -xcD "{manager_dn}" -w {manager_password} '
                   '-f /tmp/delete_member.ldif'.format(
-                    manager_dn=settings.ldap_manager_dn,
-                    manager_password=settings.ldap_manager_password
+                    manager_dn=c.config.ldap_manager_dn,
+                    manager_password=c.config.ldap_manager_password
                   ))
 
     c.run('ldapdelete -xcD {manager_dn} -w {manager_password} '
           '"uid={username},{user_search_base}"'.format(
-            manager_dn=settings.ldap_manager_dn,
-            manager_password=settings.ldap_manager_password,
+            manager_dn=c.config.ldap_manager_dn,
+            manager_password=c.config.ldap_manager_password,
             username=username,
-            user_search_base=settings.ldap_user_search_base
+            user_search_base=c.config.ldap_user_search_base
             ))
 
     c.run('ldapdelete -xcD {manager_dn} -w {manager_password} '
           '"cn={username},{group_search_base}"'.format(
-            manager_dn=settings.ldap_manager_dn,
-            manager_password=settings.ldap_manager_password,
+            manager_dn=c.config.ldap_manager_dn,
+            manager_password=c.config.ldap_manager_password,
             username=username,
-            group_search_base=settings.ldap_group_search_base
+            group_search_base=c.config.ldap_group_search_base
           ))
 
 
