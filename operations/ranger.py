@@ -1,8 +1,9 @@
 import base64
 import json
+
 import requests
 
-from invoke import run
+import invoke
 
 
 # TODO: generalize
@@ -25,7 +26,8 @@ def create_ranger_policy(c, resource, username, policy_name,
     template['resources'][resource_type]['values'].extend(resource)
     template['policyItems'][0]['users'].append(username)
 
-    run("curl -X POST {ranger_url}/service/public/v2/api/policy "
+    invoke.run(
+        "curl -X POST {ranger_url}/service/public/v2/api/policy "
         "-H 'authorization: Basic {auth_token}' "
         "-H 'content-type: application/json' "
         "-d '{content}' -k".format(
@@ -49,7 +51,8 @@ def update_nifi_flow_ranger_policy(c, username):
     policy = response.json()
     policy['policyItems'][0]['users'].append(username)
 
-    run("curl -X PUT {ranger_url}/service/public/v2/api/policy/{policy_id} "
+    invoke.run(
+        "curl -X PUT {ranger_url}/service/public/v2/api/policy/{policy_id} "
         "-H 'authorization: Basic {auth_token}' "
         "-H 'content-type: application/json' "
         "-d '{content}' -k".format(
