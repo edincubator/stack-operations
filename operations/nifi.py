@@ -10,6 +10,7 @@ def grant_processgroup(c, process_group_id, username):
     Grants a user with read and write permissions for a NiFi process group.
     """
     ranger.create_ranger_policy(
+        c,
         ['/process-groups/{id}'.format(id=process_group_id),
          '/data/process-groups/{id}'.format(id=process_group_id)],
         username,
