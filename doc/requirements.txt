@@ -6,7 +6,7 @@ blessings==1.6.1
 certifi==2018.4.16
 cffi==1.11.5
 chardet==3.0.4
-cryptography==2.2.2
+cryptography==2.3
 dk-tasklib==0.3.0
 docutils==0.14
 enum34==1.1.6
