@@ -6,15 +6,15 @@ hosts = [
 
 # LDAP settings
 
-ldap_host = ['']
+ldap_host = ''
 ldap_user_search_base = ''
-ldap_group_search_base= ''
+ldap_group_search_base = ''
 ldap_manager_dn = ''
 ldap_manager_password = ''
 
 # Kerberos settings
 
-kerberos_host = []
+kerberos_host = ''
 kerberos_realm = ''
 kerberos_admin_principal = ''
 hdfs_principal = ''
@@ -35,11 +35,11 @@ mail_password = ''
 
 # Cluster settings
 
-master_host = ['']
+master_host = ''
 
 # Ranger settings
 
-ranger_host = ['']
+ranger_host = ''
 ranger_url = ''
 ranger_user = ''
 ranger_password = ''

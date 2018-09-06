@@ -106,3 +106,4 @@ venv.bak/
 # settings
 settings.py
 settings.thor.py
+settings.eng.py
