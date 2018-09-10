@@ -233,6 +233,9 @@ class TestUser(object):
     def test_sync_ambari_users(self):
         c = Connection('root')
         c.config.ambari_url = 'http://fake-ambari-url'
+        c.config.ambari_user = 'ambari_user'
+        c.config.ambari_password = 'ambari_password'
+
         content = [
             {"Event":
                 {"specs":
@@ -241,17 +244,23 @@ class TestUser(object):
                  }
              }]
         when(invoke).run(
-            "curl -u admin -H 'X-Requested-By: ambari' -X POST -d "
-            "'{content}' {ambari_url}/api/v1/ldap_sync_events".format(
+            "curl -u {ambari_user}:{ambari_password} -H 'X-Requested-By: "
+            "ambari' -X POST -d '{content}' {ambari_url}/api/v1/"
+            "ldap_sync_events".format(
                 content=json.dumps(content),
-                ambari_url=c.config.ambari_url), pty=True)
+                ambari_url=c.config.ambari_url,
+                ambari_user=c.config.ambari_user,
+                ambari_password=c.config.ambari_password), pty=True)
         user.sync_ambari_users(c)
 
         verify(invoke, times=1).run(
-            "curl -u admin -H 'X-Requested-By: ambari' -X POST -d "
-            "'{content}' {ambari_url}/api/v1/ldap_sync_events".format(
+            "curl -u {ambari_user}:{ambari_password} -H 'X-Requested-By: "
+            "ambari' -X POST -d '{content}' {ambari_url}/api/v1/"
+            "ldap_sync_events".format(
                 content=json.dumps(content),
-                ambari_url=c.config.ambari_url), pty=True
+                ambari_url=c.config.ambari_url,
+                ambari_user=c.config.ambari_user,
+                ambari_password=c.config.ambari_password), pty=True
         )
 
         unstub()
