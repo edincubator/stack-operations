@@ -4,12 +4,12 @@ import smtplib
 from email.mime.text import MIMEText
 
 import hdfs
+import invoke
 import kerberos
 import ldap
 import ranger
 import unix
 from fabric.connection import Connection
-import invoke
 
 user = 'root'
 
@@ -66,16 +66,19 @@ def new(c, username, mail, group=None):
 
 
 @invoke.task(help={'username': 'Username of the user to be deleted'})
-def delete(c, username):
+def delete(c, username, delete_home=False):
     """
     Deletes a user from the system.
     """
-    ldap_connection = Connection(c.config.ldap_host, user)
-    ldap_connection.config = c.config
+    ldap_connection = Connection(c.config.ldap_host, user, config=c.config)
     ldap.delete_ldap_user(ldap_connection, username)
     for host in c.config.hosts:
         connection = Connection(host, user)
         unix.delete_unix_user(connection, username)
+    if delete_home:
+        master_connection = Connection(c.config.master_host, user,
+                                       config=c.config)
+        hdfs.delete_hdfs_home(master_connection, username)
     sync_ambari_users(c)
 
 
@@ -88,8 +91,11 @@ def sync_ambari_users(c):
              }
          }]
 
-    invoke.run("curl -u admin -H 'X-Requested-By: ambari' -X POST -d "
-               "'{content}' {ambari_url}/api/v1/ldap_sync_events".format(
+    invoke.run(
+        "curl -u {ambari_user}:{ambari_password} -H 'X-Requested-By: ambari'"
+        " -X POST -d '{content}' {ambari_url}/api/v1/ldap_sync_events".format(
+                ambari_user=c.config.ambari_user,
+                ambari_password=c.config.ambari_password,
                 content=json.dumps(content),
                 ambari_url=c.config.ambari_url), pty=True)
 

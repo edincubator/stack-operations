@@ -25,6 +25,8 @@ hbase_principal = ''
 # Ambari settings
 
 ambari_url = ''
+ambari_user = ''
+ambari_password = ''
 
 # Mail settings
 
