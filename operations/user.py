@@ -71,6 +71,7 @@ def delete(c, username):
     Deletes a user from the system.
     """
     ldap_connection = Connection(c.config.ldap_host, user)
+    ldap_connection.config = c.config
     ldap.delete_ldap_user(ldap_connection, username)
     for host in c.config.hosts:
         connection = Connection(host, user)
