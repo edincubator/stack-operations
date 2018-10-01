@@ -21,6 +21,25 @@ Setup OpenLDAP
 
 * Follow steps at: https://www.server-world.info/en/note?os=CentOS_7&p=openldap&f=1
 * Enable LDAP logging: http://tutoriels.meddeb.net/openldap-tutorial-log/
+* Setup logrotate for LDAP log file:
+    * Create `/etc/logrotate.d/slapd` file with the following content:
+
+.. code-block:: vim
+
+  /var/log/slapd.log {
+    copytruncate
+    daily
+    rotate 20
+    compress
+    missingok
+    size 10M
+  }
+
+Test logrotate configuration:
+
+.. code-block:: console
+
+ # logrotate -vf /etc/logrotate.d/slapd
 
 Setup memberOf attribute support
 ................................
@@ -86,9 +105,10 @@ Install phpLDAPAdmin:
 
 .. code-block:: console
 
-  # docker run -P \
-       --env PHPLDAPADMIN_LDAP_HOSTS=<ldap-host> \
-       --detach osixia/phpldapadmin:0.7.1
+  # docker run -p 6443:443 --name phpldapadmin  \
+    -v /root/phpldapadmin/certs:/container/service/ldap-client/assets/certs \
+    -v /root/phpldapadmin/certs:/container/service/phpldapadmin/assets/apache2/certs \
+    --env PHPLDAPADMIN_LDAP_HOSTS=<ldap_host> --detach osixia/phpldapadmin:0.7.2
 
 phpLDAP admin is available at https://host:port.
 
