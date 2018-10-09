@@ -1,6 +1,8 @@
 import json
 import os
 import smtplib
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 import hdfs
@@ -9,6 +11,7 @@ import kerberos
 import ldap
 import ranger
 import unix
+import vpn
 from fabric.connection import Connection
 
 user = 'root'
@@ -31,6 +34,9 @@ def new(c, username, mail, group=None):
     for host in c.config.hosts:
         connection = Connection(host, user)
         unix.create_unix_user(connection, username)
+
+    vpn_connection = Connection(c.config.vpn_host, user, config=c.config)
+    ovpn_config = vpn.create_user(vpn_connection, username)
 
     ldap_connection = Connection(c.config.ldap_host, user, config=c.config)
     ldap.create_ldap_user(ldap_connection, username, password)
@@ -62,7 +68,8 @@ def new(c, username, mail, group=None):
     ranger.update_nifi_flow_ranger_policy(c, username)
 
     sync_ambari_users(c)
-    send_password_mail(c, username, password, mail, folder_uuid, file_uuid)
+    send_password_mail(
+        c, username, password, mail, folder_uuid, file_uuid, ovpn_config)
 
 
 @invoke.task(help={'username': 'Username of the user to be deleted'})
@@ -100,10 +107,12 @@ def sync_ambari_users(c):
                 ambari_url=c.config.ambari_url), pty=True)
 
 
-def send_password_mail(c, username, password, mail, folder_uuid, file_uuid):
+def send_password_mail(c, username, password, mail, folder_uuid, file_uuid,
+                       ovpn_config):
     principal = '{username}@{realm}'.format(username=username,
                                             realm=c.config.kerberos_realm)
-    msg = MIMEText('''Welcome to EDI Big Data Stack!\n\n
+    msg = MIMEMultipart()
+    text = '''Welcome to EDI Big Data Stack!\n\n
 Those are your credentials for accesing to the system:\n\n
 LDAP username: {username}\n
 Kerberos Principal: {principal}\n
@@ -115,11 +124,18 @@ NiFi keytab: {keytab}'''.format(
         keytab='{folder_uuid}/{file_uuid}.keytab'.format(
             folder_uuid=folder_uuid,
             file_uuid=file_uuid
-        )))
+        ))
+
     msg['Subject'] = "[European Data Incubator] Big Data Stack Credentials"
     msg['From'] = "EDI - European Data Incubator <{}>".format(
         c.config.mail_from)
     msg['To'] = mail
+
+    msg.attach(MIMEText(text))
+
+    part = MIMEApplication(ovpn_config, Name='edi.ovpn')
+    part['Content-Disposition'] = 'attachment; filename="edi.ovpn"'
+    msg.attach(part)
 
     server = smtplib.SMTP(c.config.mail_host, c.config.mail_port)
     if c.config.mail_user is not None:
