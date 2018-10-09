@@ -107,3 +107,4 @@ venv.bak/
 settings.py
 settings.thor.py
 settings.eng.py
+settings.hetzner.py

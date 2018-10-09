@@ -2,7 +2,7 @@ import uuid
 
 
 def create_kerberos_user(c, username, password):
-    c.run('kadmin -p {admin_principal} -w {admin_password} addprinc -x '
+    c.run('kadmin -p {admin_principal} -w \'{admin_password}\' addprinc -x '
           'dn="uid={username},{user_search_base}" -pw {password} '
           '{username}'.format(
             username=username,
@@ -21,7 +21,7 @@ def create_nifi_keytab(c, username):
 
     c.run('mkdir /home/nifi/{folder_uuid}'.format(folder_uuid=folder_uuid))
 
-    c.run('kadmin -p {admin_principal} -w {admin_password} -q "xst '
+    c.run('kadmin -p {admin_principal} -w \'{admin_password}\' -q "xst '
           '-norandkey -k /home/nifi/{folder_uuid}/{file_uuid}.keytab '
           '{principal}"'.format(
             admin_principal=c.config.kerberos_admin_principal,
