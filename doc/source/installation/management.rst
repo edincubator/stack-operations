@@ -13,6 +13,42 @@ System setup
 
   # yum -y upgrade
 
+OpenVPN server
+--------------
+
+Follow instructions at `<https://medium.com/@gurayy/set-up-a-vpn-server-with-docker-in-5-minutes-a66184882c45>`_.
+
+DNSMasq
+-------
+
+For installing DNSMasq, execute the following command:
+
+.. code-block:: console
+
+  docker run \
+     --name dnsmasq \
+     -d \
+     --network host
+     -v /root/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf \
+     --log-opt "max-size=100m" \
+     -e "HTTP_USER=foo" \
+     -e "HTTP_PASS=bar" \
+     --restart always \
+     jpillora/dnsmasq
+
+dnsmasq.conf:
+
+.. code-block:: vim
+
+  #dnsmasq config, for a complete example, see:
+  #  http://oss.segetech.com/intra/srv/dnsmasq.conf
+  #log all dns queries
+  log-queries
+  #use google as default nameservers
+  server=8.8.4.4
+  server=8.8.8.8
+
+
 OpenLDAP & Kerberos
 -------------------
 
@@ -108,7 +144,9 @@ Install phpLDAPAdmin:
   # docker run -p 6443:443 --name phpldapadmin  \
     -v /root/phpldapadmin/certs:/container/service/ldap-client/assets/certs \
     -v /root/phpldapadmin/certs:/container/service/phpldapadmin/assets/apache2/certs \
-    --env PHPLDAPADMIN_LDAP_HOSTS=<ldap_host> --detach osixia/phpldapadmin:0.7.2
+    --env PHPLDAPADMIN_LDAP_HOSTS=<ldap_host>  \
+    --restart always \
+    --detach osixia/phpldapadmin:0.7.2
 
 phpLDAP admin is available at https://host:port.
 
@@ -144,6 +182,13 @@ schema_convert.conf:
 
   # mkdir /tmp/ldif_output
   # slapcat -f schema_convert.conf -F /tmp/ldif_output -n0 -s "cn={12}kerberos,cn=schema,cn=config" > /tmp/cn=kerberos.ldif
+
+
+Load the new schema with ldapadd:
+
+.. code-block:: console
+
+  # sudo ldapadd -Q -Y EXTERNAL -H ldapi:/// -f /tmp/cn\=kerberos.ldif
 
 Edit the generated `/tmp/cn\=kerberos.ldif` file, changing the following attributes:
 
@@ -227,8 +272,7 @@ Edit `/var/kerberos/krb5kdc/kadm5.acl`:
 
 .. warning::
 
-  When configuring Kerberos for Ambari, sometimes Ambari modified `/etc/krb5.conf`
-  file and Kerberos stops working!
+  You must let Ambari managing `/etc/krb5.conf` but *add your custom LDAP sections!*
 
 
 Installing Ambari
@@ -251,6 +295,12 @@ Enabling SSL for Ambari
 .......................
 
 Follow steps at https://docs.hortonworks.com/HDPDocuments/Ambari-2.6.2.2/bk_ambari-security/content/optional_set_up_ssl_for_ambari.html.
+
+.. warning::
+
+  When adding nodes to the cluster, an SSL error might appear. Follow instructions
+  at `<https://community.hortonworks.com/content/supportkb/208283/error-2018-07-16-005228887-netutilpy96-eof-occurre.html>`_
+  to solve it.
 
 Deploying a cluster
 ...................
