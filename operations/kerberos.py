@@ -36,7 +36,7 @@ def create_nifi_keytab(c, username):
             folder_uuid=folder_uuid,
             file_uuid=file_uuid
           ))
-    c.run('chmod 400 /home/nifi/{folder_uuid}/{file_uuid}.keytab'.format(
+    c.run('chmod 440 /home/nifi/{folder_uuid}/{file_uuid}.keytab'.format(
         folder_uuid=folder_uuid, file_uuid=file_uuid
     ))
 
