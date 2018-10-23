@@ -1,6 +1,3 @@
-import uuid
-
-
 def create_kerberos_user(c, username, password):
     c.run('kadmin -p {admin_principal} -w \'{admin_password}\' addprinc -x '
           'dn="uid={username},{user_search_base}" -pw {password} '
@@ -13,9 +10,7 @@ def create_kerberos_user(c, username, password):
           )
 
 
-def create_nifi_keytab(c, username):
-    folder_uuid = uuid.uuid1()
-    file_uuid = uuid.uuid1()
+def create_nifi_keytab(c, username, folder_uuid, file_uuid):
     principal = '{username}@{realm}'.format(username=username,
                                             realm=c.config.kerberos_realm)
 
@@ -30,9 +25,8 @@ def create_nifi_keytab(c, username):
             file_uuid=file_uuid,
             principal=principal
           ))
-    c.run('chown {username}:hadoop /home/nifi/{folder_uuid}/'
+    c.run('chown nifi:hadoop /home/nifi/{folder_uuid}/'
           '{file_uuid}.keytab'.format(
-            username=username,
             folder_uuid=folder_uuid,
             file_uuid=file_uuid
           ))

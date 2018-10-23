@@ -1,6 +1,7 @@
 import json
 import os
 import smtplib
+import uuid
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -47,9 +48,12 @@ def new(c, username, mail, group=None):
                                      config=c.config)
     kerberos.create_kerberos_user(kerberos_connection, username, password)
 
-    nifi_connection = Connection(c.config.master_host, user, config=c.config)
-    folder_uuid, file_uuid = kerberos.create_nifi_keytab(
-        nifi_connection, username)
+    for nifi_host in c.config.nifi_servers:
+        nifi_connection = Connection(nifi_host, user, config=c.config)
+        folder_uuid = uuid.uuid1()
+        file_uuid = uuid.uuid1()
+        kerberos.create_nifi_keytab(
+            nifi_connection, username, folder_uuid, file_uuid)
 
     ranger_connection = Connection(c.config.ranger_host, user, config=c.config)
     ranger.update_ranger_usersync(ranger_connection)
