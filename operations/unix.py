@@ -4,4 +4,4 @@ def create_unix_user(c, username):
 
 
 def delete_unix_user(c, username):
-    c.run('userdel {}'.format(username))
+    c.run('userdel {}'.format(username), warn=True)

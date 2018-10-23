@@ -61,7 +61,7 @@ def delete_ldap_user(c, username):
                     manager_password=c.config.ldap_manager_password,
                     user_search_base=c.config.ldap_user_search_base,
                     username=username
-        )).stdout
+        ), warn=True).stdout
     result = regex.search(r'memberOf: ([\w=,]+)', output)
     if result is not None:
         if len(result.groups()) > 0:
@@ -86,7 +86,7 @@ def delete_ldap_user(c, username):
                   '-f /tmp/delete_member.ldif'.format(
                     manager_dn=c.config.ldap_manager_dn,
                     manager_password=c.config.ldap_manager_password
-                  ))
+                  ), warn=True)
 
     c.run('ldapdelete -xcD {manager_dn} -w {manager_password} '
           '"uid={username},{user_search_base}"'.format(
@@ -94,7 +94,7 @@ def delete_ldap_user(c, username):
             manager_password=c.config.ldap_manager_password,
             username=username,
             user_search_base=c.config.ldap_user_search_base
-            ))
+            ), warn=True)
 
     c.run('ldapdelete -xcD {manager_dn} -w {manager_password} '
           '"cn={username},{group_search_base}"'.format(
@@ -102,7 +102,7 @@ def delete_ldap_user(c, username):
             manager_password=c.config.ldap_manager_password,
             username=username,
             group_search_base=c.config.ldap_group_search_base
-          ))
+          ), warn=True)
 
 
 def make_secret(password):

@@ -25,8 +25,9 @@ user = 'root'
 
 @invoke.task(help={'username': 'Username of the user to be created',
                    'mail': 'Mail address for sending credentials',
-                   'group': 'The group user belongs to'})
-def new(c, username, mail, group=None):
+                   'group': 'The group user belongs to',
+                   'quota': 'HDFS Space quota for user'})
+def new(c, username, mail, group=None, quota=''):
     """
     Creates a new user in the system.
     """
@@ -48,10 +49,10 @@ def new(c, username, mail, group=None):
                                      config=c.config)
     kerberos.create_kerberos_user(kerberos_connection, username, password)
 
+    folder_uuid = uuid.uuid1()
+    file_uuid = uuid.uuid1()
     for nifi_host in c.config.nifi_servers:
         nifi_connection = Connection(nifi_host, user, config=c.config)
-        folder_uuid = uuid.uuid1()
-        file_uuid = uuid.uuid1()
         kerberos.create_nifi_keytab(
             nifi_connection, username, folder_uuid, file_uuid)
 
@@ -60,6 +61,8 @@ def new(c, username, mail, group=None):
 
     master_connection = Connection(c.config.master_host, user, config=c.config)
     hdfs.create_hdfs_home(master_connection, username)
+    if not '':
+        hdfs.set_space_quota(master_connection, username, quota)
     ranger.create_ranger_policy(
         c,
         ['/user/{}'.format(username)],
@@ -76,13 +79,19 @@ def new(c, username, mail, group=None):
         c, username, password, mail, folder_uuid, file_uuid, ovpn_config)
 
 
-@invoke.task(help={'username': 'Username of the user to be deleted'})
+@invoke.task(help={'username': 'Username of the user to be deleted',
+                   'delete_home': 'Set for deleting user home directory'})
 def delete(c, username, delete_home=False):
     """
     Deletes a user from the system.
     """
     ldap_connection = Connection(c.config.ldap_host, user, config=c.config)
     ldap.delete_ldap_user(ldap_connection, username)
+
+    # Fabric can't detect Docker prompt, so we have to do this manually
+    # vpn_connection = Connection(c.config.vpn_host, user, config=c.config)
+    # vpn.delete_user(vpn_connection, username)
+
     for host in c.config.hosts:
         connection = Connection(host, user)
         unix.delete_unix_user(connection, username)
@@ -90,6 +99,9 @@ def delete(c, username, delete_home=False):
         master_connection = Connection(c.config.master_host, user,
                                        config=c.config)
         hdfs.delete_hdfs_home(master_connection, username)
+
+    ranger_connection = Connection(c.config.ranger_host, user, config=c.config)
+    ranger.update_ranger_usersync(ranger_connection)
     sync_ambari_users(c)
 
 
