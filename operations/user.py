@@ -133,7 +133,8 @@ Those are your credentials for accesing to the system:\n\n
 LDAP username: {username}\n
 Kerberos Principal: {principal}\n
 Password: {password}\n
-NiFi keytab: {keytab}'''.format(
+NiFi keytab: {keytab}\n\n
+Please, check out the documentation at https://docs.edincubator.eu'''.format(
         username=username,
         principal=principal,
         password=password,
