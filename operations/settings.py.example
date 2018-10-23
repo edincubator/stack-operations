@@ -4,6 +4,11 @@
 hosts = [
 ]
 
+# VPN settings
+vpn_host = ''
+vpn_image_name = ''
+vpn_data_dir = ''
+
 # LDAP settings
 
 ldap_host = ''
@@ -55,6 +60,8 @@ hive_url = ''
 hive_beeline_principal = ''
 
 # Nifi settings
+nifi_servers = [
+]
 nifi_ranger_flow_policy_id = ''
 
 # Kafka settings
