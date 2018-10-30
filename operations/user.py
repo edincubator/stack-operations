@@ -61,7 +61,7 @@ def new(c, username, mail, group=None, quota=''):
 
     master_connection = Connection(c.config.master_host, user, config=c.config)
     hdfs.create_hdfs_home(master_connection, username)
-    if not '':
+    if quota is not '':
         hdfs.set_space_quota(master_connection, username, quota)
     ranger.create_ranger_policy(
         c,
