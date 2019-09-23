@@ -8,7 +8,7 @@ def create_user(c, username):
             vpn_data_dir=c.vpn_data_dir,
             vpn_container_name=c.vpn_image_name,
             username=username
-            ))
+            ), warn=True)
 
     return c.run(
         'docker run -v {vpn_data_dir}:/etc/openvpn '
