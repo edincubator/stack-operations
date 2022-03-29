@@ -19,7 +19,7 @@ ipaddress==1.0.22
 Jinja2==2.10
 MarkupSafe==1.0
 packaging==17.1
-paramiko==2.4.1
+paramiko==2.10.1
 pyasn1==0.4.2
 pyasn1-modules==0.2.1
 pycparser==2.18
